@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model appointment_services {
+  appointment_id Int
+  service_id     Int
+  quantity       Int          @default(1)
+  price_at_time  Decimal      @db.Decimal(10, 2)
+  appointments   appointments @relation(fields: [appointment_id], references: [appointment_id], onDelete: Cascade, onUpdate: NoAction)
+  services       services     @relation(fields: [service_id], references: [service_id], onUpdate: NoAction)
+
+  @@id([appointment_id, service_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This table contains exclusion constraints and requires additional setup for migrations. Visit https://pris.ly/d/exclusion-constraints for more info.
+model appointments {
+  appointment_id                       Int                       @id @default(autoincrement())
+  appointment_uuid                     String                    @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client_id                            Int
+  car_id                               Int
+  master_id                            Int?
+  box_id                               Int?
+  start_time                           DateTime                  @db.Timestamptz(6)
+  end_time                             DateTime                  @db.Timestamptz(6)
+  status                               appointment_status        @default(scheduled)
+  total_price                          Decimal?                  @default(0) @db.Decimal(10, 2)
+  discount_percent                     Decimal?                  @default(0) @db.Decimal(5, 2)
+  final_price                          Decimal?                  @default(dbgenerated("(total_price * ((1)::numeric - (discount_percent / (100)::numeric)))")) @db.Decimal(10, 2)
+  notes                                String?
+  created_at                           DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at                           DateTime                  @default(now()) @db.Timestamptz(6)
+  created_by                           Int?
+  time_range                           Unsupported("tstzrange")? @default(dbgenerated("tstzrange(start_time, end_time, '[)'::text)"))
+  appointment_services                 appointment_services[]
+  boxes                                boxes?                    @relation(fields: [box_id], references: [box_id], onUpdate: NoAction)
+  cars                                 cars                      @relation(fields: [car_id], references: [car_id], onUpdate: NoAction)
+  users_appointments_client_idTousers  users                     @relation("appointments_client_idTousers", fields: [client_id], references: [user_id], onUpdate: NoAction)
+  users_appointments_created_byTousers users?                    @relation("appointments_created_byTousers", fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  employees                            employees?                @relation(fields: [master_id], references: [employee_id], onUpdate: NoAction)
+
+  @@index([client_id], map: "idx_appointments_client_id")
+  @@index([start_time(sort: Desc)], map: "idx_appointments_start_time")
+  @@index([time_range], map: "idx_appointments_time_range", type: Gist)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model boxes {
+  box_id       Int            @id @default(autoincrement())
+  box_number   Int            @unique
+  capacity     Int            @default(2)
+  is_active    Boolean        @default(true)
+  description  String?
+  appointments appointments[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model cars {
+  car_id              Int            @id @default(autoincrement())
+  owner_id            Int
+  make                String         @db.VarChar(100)
+  model               String         @db.VarChar(100)
+  year_of_manufacture Int            @db.SmallInt
+  vin_code            String?        @unique @db.VarChar(17)
+  license_plate       String?        @db.VarChar(20)
+  mileage             Int?
+  notes               String?
+  created_at          DateTime       @default(now()) @db.Timestamptz(6)
+  appointments        appointments[]
+  users               users          @relation(fields: [owner_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([owner_id], map: "idx_cars_owner_id")
+}
+
+model employee_specializations {
+  employee_id        Int
+  specialization_id  Int
+  certification_date DateTime?       @db.Date
+  employees          employees       @relation(fields: [employee_id], references: [employee_id], onDelete: Cascade, onUpdate: NoAction)
+  specializations    specializations @relation(fields: [specialization_id], references: [specialization_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([employee_id, specialization_id])
+  @@index([specialization_id], map: "idx_emp_specs_spec_id")
+}
+
+model employees {
+  employee_id              Int                        @id @default(autoincrement())
+  user_id                  Int                        @unique
+  hire_date                DateTime                   @default(dbgenerated("CURRENT_DATE")) @db.Date
+  is_available             Boolean                    @default(true)
+  appointments             appointments[]
+  employee_specializations employee_specializations[]
+  users                    users                      @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  work_schedules           work_schedules[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model services {
+  service_id           Int                    @id @default(autoincrement())
+  name                 String                 @unique @db.VarChar(255)
+  description          String?
+  price                Decimal                @db.Decimal(10, 2)
+  duration_minutes     Int
+  required_spec_id     Int?
+  is_active            Boolean                @default(true)
+  image_url            String?
+  appointment_services appointment_services[]
+  specializations      specializations?       @relation(fields: [required_spec_id], references: [specialization_id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+model specializations {
+  specialization_id        Int                        @id @default(autoincrement())
+  name                     String                     @unique @db.VarChar(255)
+  description              String?
+  is_active                Boolean                    @default(true)
+  employee_specializations employee_specializations[]
+  services                 services[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model users {
+  user_id                                     Int            @id @default(autoincrement())
+  first_name                                  String         @db.VarChar(100)
+  last_name                                   String         @db.VarChar(100)
+  email                                       String         @db.VarChar(255)
+  phone_number                                String?        @unique @db.VarChar(20)
+  password_hash                               String         @db.VarChar(255)
+  role                                        user_role      @default(client)
+  is_active                                   Boolean        @default(true)
+  created_at                                  DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at                                  DateTime       @default(now()) @db.Timestamptz(6)
+  appointments_appointments_client_idTousers  appointments[] @relation("appointments_client_idTousers")
+  appointments_appointments_created_byTousers appointments[] @relation("appointments_created_byTousers")
+  cars                                        cars[]
+  employees                                   employees?
+  email_lower                                 String         @db.VarChar(255) @default(dbgenerated("lower((email)::text)"))
+  @@unique([email_lower], map: "ux_users_email_lower")
+  @@index([created_at(sort: Desc)], map: "idx_users_created_at")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model work_schedules {
+  schedule_id Int       @id @default(autoincrement())
+  employee_id Int
+  day_of_week Int       @db.SmallInt
+  start_time  DateTime  @db.Time(6)
+  end_time    DateTime  @db.Time(6)
+  is_active   Boolean   @default(true)
+  employees   employees @relation(fields: [employee_id], references: [employee_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([employee_id, day_of_week, start_time, end_time])
+}
+
+enum appointment_status {
+  scheduled
+  in_progress
+  completed
+  cancelled
+}
+
+enum user_role {
+  client
+  admin
+  master
+}

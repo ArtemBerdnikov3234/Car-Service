@@ -1,0 +1,12 @@
+# backend/.gitignore
+
+# Dependencies
+/node_modules
+
+# Environment variables
+.env
+
+# Logs
+logs
+*.log
+/generated/prisma
