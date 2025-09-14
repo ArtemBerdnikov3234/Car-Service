@@ -177,7 +177,7 @@
         </div>
       </div>
 
-      <!-- Шаг 3 -->
+      <!-- Шаг 3: Выбор даты и времени -->
       <div v-if="step === 3">
         <h2 class="mb-8 text-center text-3xl font-bold text-white">
           Шаг 3: Выберите дату и время
@@ -218,13 +218,19 @@
                 v-for="(day, index) in calendarGrid"
                 :key="index"
                 @click="selectDate(day)"
-                class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-transparent transition"
+                class="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-transparent transition"
                 :class="getDayClasses(day)"
+                :title="getDayTitle(day)"
               >
                 <span v-if="day">{{ day.date.getDate() }}</span>
+                <span
+                  v-if="day && isDateBookedByMe(formatDateToYYYYMMDD(day.date))"
+                  class="absolute bottom-1 h-1 w-1 rounded-full bg-yellow-400"
+                ></span>
               </div>
             </div>
           </div>
+
           <!-- Выбор времени -->
           <div
             class="border-t border-white/10 pt-8 md:border-t-0 md:border-l md:pt-0 md:pl-8"
@@ -260,14 +266,17 @@
                 v-for="time in availableSlots"
                 :key="time"
                 @click="selectTime(time)"
-                class="rounded-lg py-2 font-semibold transition"
-                :class="
-                  selectedTime === time
-                    ? 'bg-brand-red text-white'
-                    : 'bg-light-dark text-secondary-text hover:bg-card-dark'
-                "
+                class="relative rounded-lg py-2 font-semibold transition"
+                :class="getTimeSlotClasses(time)"
+                :disabled="isTimeSlotBookedByMe(time)"
+                :title="getTimeSlotTitle(time)"
               >
                 {{ time }}
+                <span
+                  v-if="isTimeSlotBookedByMe(time)"
+                  class="absolute top-1 right-1 h-2 w-2 rounded-full bg-yellow-400"
+                  title="У вас уже есть запись на это время"
+                ></span>
               </button>
             </div>
           </div>
@@ -359,81 +368,189 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, nextTick } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import apiClient from "@/services/api";
 import BaseButton from "@/components/BaseButton.vue";
 
+// === ОСНОВНЫЕ ПЕРЕМЕННЫЕ ===
 const step = ref(1);
 const router = useRouter();
-const bookingLoading = ref(false);
-const bookingError = ref(null);
 const userCars = ref([]);
-const carsLoading = ref(true);
-const selectedCarId = ref(null);
 const allServices = ref([]);
-const servicesLoading = ref(true);
+const myBookings = ref([]);
+const selectedCarId = ref(null);
 const selectedServiceIds = ref(new Set());
 const currentDate = ref(new Date());
 const selectedDate = ref(null);
 const availableSlots = ref([]);
-const slotsLoading = ref(false);
-const slotsError = ref(null);
 const selectedTime = ref(null);
 
-onMounted(async () => {
-  carsLoading.value = true;
-  try {
-    const carsRes = await apiClient.get("/cars");
-    userCars.value = carsRes.data;
-  } catch (error) {
-    console.error("Ошибка загрузки автомобилей:", error);
-  } finally {
-    carsLoading.value = false;
-  }
+// === СТАТУСЫ ЗАГРУЗКИ ===
+const carsLoading = ref(true);
+const servicesLoading = ref(true);
+const bookingsLoading = ref(true);
+const slotsLoading = ref(false);
+const slotsError = ref(null);
+const bookingLoading = ref(false);
+const bookingError = ref(null);
 
+// === ФУНКЦИИ ===
+
+/**
+ * Надежная функция для форматирования объекта Date в строку YYYY-MM-DD,
+ * игнорируя часовые пояса.
+ */
+const formatDateToYYYYMMDD = (date) => {
+  if (!date) return null;
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Загрузка всех начальных данных при монтировании компонента
+ */
+onMounted(async () => {
+  bookingsLoading.value = true;
+  carsLoading.value = true;
   servicesLoading.value = true;
   try {
-    const servicesRes = await apiClient.get("/services");
+    const [carsRes, servicesRes, bookingsRes] = await Promise.all([
+      apiClient.get("/cars"),
+      apiClient.get("/services"),
+      apiClient.get("/appointments/my"),
+    ]);
+    userCars.value = carsRes.data;
     allServices.value = servicesRes.data.filter((s) => s.is_active);
+    myBookings.value = bookingsRes.data.filter(
+      (b) => b.status !== "cancelled" && b.status !== "completed"
+    );
   } catch (error) {
-    console.error("Ошибка загрузки услуг:", error);
+    console.error("Ошибка при начальной загрузке данных:", error);
   } finally {
+    bookingsLoading.value = false;
+    carsLoading.value = false;
     servicesLoading.value = false;
   }
 });
 
+/**
+ * Запрос свободных слотов на сервере
+ */
 const triggerSlotsRequest = async () => {
-  if (!selectedDate.value) {
+  if (!selectedDate.value || selectedServiceIds.value.size === 0) {
+    availableSlots.value = [];
     return;
   }
-
   slotsLoading.value = true;
   slotsError.value = null;
   availableSlots.value = [];
   selectedTime.value = null;
 
   try {
+    const serviceIdsString = Array.from(selectedServiceIds.value).join(",");
     const response = await apiClient.get(`/appointments/available-slots`, {
       params: {
         date: selectedDate.value,
-        duration: totalDuration.value,
+        serviceIds: serviceIdsString,
       },
     });
     availableSlots.value = response.data;
   } catch (error) {
     console.error("Ошибка загрузки слотов времени:", error);
-    slotsError.value = "Не удалось загрузить слоты. Попробуйте снова.";
+    slotsError.value =
+      error.response?.data?.message || "Не удалось загрузить слоты.";
   } finally {
     slotsLoading.value = false;
   }
 };
-
 watch(selectedDate, triggerSlotsRequest);
 
+/**
+ * Проверяет, есть ли у пользователя запись на эту дату
+ */
+const isDateBookedByMe = (dateStr) => {
+  if (!dateStr || bookingsLoading.value) return false;
+  // Преобразуем UTC дату с сервера в локальную YYYY-MM-DD для сравнения
+  return myBookings.value.some((booking) => {
+    const localDate = new Date(booking.start_time);
+    return formatDateToYYYYMMDD(localDate) === dateStr;
+  });
+};
+
+/**
+ * Проверяет, есть ли у пользователя запись на это конкретное время
+ */
+const isTimeSlotBookedByMe = (timeStr) => {
+  if (!selectedDate.value || !timeStr) return false;
+  return myBookings.value.some((booking) => {
+    const localDate = new Date(booking.start_time);
+    const bookingDateStr = formatDateToYYYYMMDD(localDate);
+    const bookingTimeStr = localDate.toLocaleTimeString("ru-RU", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return bookingDateStr === selectedDate.value && bookingTimeStr === timeStr;
+  });
+};
+
+const selectDate = (day) => {
+  if (!day || !day.isCurrentMonth || day.isPast) return;
+  selectedDate.value = formatDateToYYYYMMDD(day.date);
+};
+
 const selectTime = (time) => {
+  if (isTimeSlotBookedByMe(time)) return; // Блокируем клик
   selectedTime.value = time;
 };
+
+const getDayClasses = (day) => {
+  if (!day) return "invisible";
+  const dateStr = formatDateToYYYYMMDD(day.date);
+  return {
+    "opacity-50 cursor-not-allowed": !day.isCurrentMonth,
+    "cursor-not-allowed text-gray-600": day.isPast && day.isCurrentMonth,
+    "hover:border-white/50": !day.isPast && day.isCurrentMonth,
+    "bg-brand-red text-white font-bold":
+      selectedDate.value === dateStr && !day.isPast,
+    "border-yellow-500/50": isDateBookedByMe(dateStr),
+  };
+};
+
+const getDayTitle = (day) => {
+  if (!day) return "";
+  const dateStr = formatDateToYYYYMMDD(day.date);
+  const bookingOnDate = myBookings.value.find(
+    (b) => formatDateToYYYYMMDD(new Date(b.start_time)) === dateStr
+  );
+  return bookingOnDate
+    ? `У вас уже есть запись в ${formatTime(bookingOnDate.start_time)}`
+    : "";
+};
+
+const getTimeSlotClasses = (time) => {
+  const isBooked = isTimeSlotBookedByMe(time);
+  return {
+    "bg-brand-red text-white": selectedTime.value === time && !isBooked,
+    "bg-light-dark text-secondary-text hover:bg-card-dark":
+      !isBooked && selectedTime.value !== time,
+    "bg-yellow-500/20 text-yellow-400 cursor-not-allowed": isBooked,
+  };
+};
+
+const getTimeSlotTitle = (time) => {
+  return isTimeSlotBookedByMe(time) ? "У вас уже есть запись на это время" : "";
+};
+
+const formatTime = (isoString) =>
+  new Date(isoString).toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 
 const selectedCar = computed(() =>
   userCars.value.find((c) => c.car_id === selectedCarId.value)
@@ -456,21 +573,17 @@ const isNextStepDisabled = computed(() => {
 });
 
 const nextStep = () => {
-  if (!isNextStepDisabled.value && step.value < 4) {
-    step.value++;
-  }
+  if (!isNextStepDisabled.value && step.value < 4) step.value++;
 };
 const prevStep = () => {
   if (step.value > 1) step.value--;
 };
-
 const toggleService = (serviceId) => {
   if (selectedServiceIds.value.has(serviceId)) {
     selectedServiceIds.value.delete(serviceId);
   } else {
     selectedServiceIds.value.add(serviceId);
   }
-
   if (step.value === 3 && selectedDate.value) {
     triggerSlotsRequest();
   }
@@ -492,17 +605,13 @@ const calendarGrid = computed(() => {
   const days = [];
   let startDayOfWeek = firstDayOfMonth.getDay();
   startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
-
   for (let i = 0; i < startDayOfWeek; i++) {
     days.push(null);
   }
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
     const date = new Date(year, month, i);
-    date.setHours(0, 0, 0, 0);
     days.push({ date, isCurrentMonth: true, isPast: date < today });
   }
   return days;
@@ -518,36 +627,18 @@ const nextMonth = () => {
     currentDate.value.setMonth(currentDate.value.getMonth() + 1, 1)
   );
 };
-const formatDateToYYYYMMDD = (date) => date.toISOString().split("T")[0];
-const selectDate = (day) => {
-  if (!day || !day.isCurrentMonth || day.isPast) return;
-  selectedDate.value = formatDateToYYYYMMDD(day.date);
-};
+
 const selectedDateFormatted = computed(() => {
   if (!selectedDate.value) return "";
-  const date = new Date(selectedDate.value);
-  const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString(
-    "ru-RU",
-    {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }
-  );
+  const [year, month, day] = selectedDate.value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 });
-const getDayClasses = (day) => {
-  if (!day) return "invisible";
-  return {
-    "opacity-50 cursor-not-allowed": !day.isCurrentMonth,
-    "cursor-not-allowed text-gray-600": day.isPast && day.isCurrentMonth,
-    "hover:border-white/50": !day.isPast && day.isCurrentMonth,
-    "bg-brand-red text-white font-bold":
-      selectedDate.value === formatDateToYYYYMMDD(day.date) &&
-      day.isCurrentMonth &&
-      !day.isPast,
-  };
-};
 
 const submitBooking = async () => {
   if (
@@ -563,20 +654,19 @@ const submitBooking = async () => {
   bookingLoading.value = true;
   bookingError.value = null;
 
-  const startTimeISO = new Date(
-    `${selectedDate.value}T${selectedTime.value}:00`
-  ).toISOString();
+  // Формируем строку без информации о часовом поясе.
+  // Бэкенд (new Date()) интерпретирует ее как локальное время сервера.
+  const startTimeString = `${selectedDate.value}T${selectedTime.value}:00`;
 
   const bookingData = {
     car_id: selectedCarId.value,
     service_ids: Array.from(selectedServiceIds.value),
-    start_time: startTimeISO,
+    start_time: startTimeString,
   };
 
   try {
     await apiClient.post("/appointments", bookingData);
-
-    router.push({ name: "ClientDashboard" });
+    router.push({ name: "ClientDashboard", query: { bookingSuccess: "true" } });
   } catch (error) {
     console.error("Ошибка при создании записи:", error);
     bookingError.value =

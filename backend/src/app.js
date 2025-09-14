@@ -1,4 +1,5 @@
 // src/app.js
+
 const express = require("express");
 const cors = require("cors");
 
@@ -10,14 +11,15 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const userRoutes = require("./routes/userRoutes");
 const scheduleRoutes = require("./routes/scheduleRoutes");
+const boxRoutes = require("./routes/boxRoutes"); // <-- ДОБАВИТЬ ЭТУ СТРОКУ
 
 const app = express();
 
-// Подключаем middleware
+// ... (middleware)
 app.use(cors());
 app.use(express.json());
 
-// Тестовый корневой маршрут
+// ... (тестовый маршрут)
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Welcome to AutoService API!" });
 });
@@ -30,8 +32,9 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/schedules", scheduleRoutes);
+app.use("/api/boxes", boxRoutes); // <-- ДОБАВИТЬ ЭТУ СТРОКУ
 
-// Обработчик для несуществующих маршрутов
+// ... (обработчик 404)
 app.use((req, res, next) => {
   res.status(404).json({ message: "Route not found" });
 });
