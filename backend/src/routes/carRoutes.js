@@ -1,4 +1,3 @@
-// src/routes/carRoutes.js
 const express = require("express");
 const carController = require("../controllers/carController");
 const { protect } = require("../middleware/authMiddleware");

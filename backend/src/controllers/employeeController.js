@@ -1,4 +1,3 @@
-// src/controllers/employeeController.js
 const { PrismaClient } = require("../../generated/prisma");
 const prisma = new PrismaClient();
 const bcrypt = require("bcryptjs");
@@ -43,12 +42,10 @@ exports.createEmployee = async (req, res) => {
     !role ||
     !["admin", "master"].includes(role)
   ) {
-    return res
-      .status(400)
-      .json({
-        message:
-          "Имя, email, пароль и корректная роль ('admin' или 'master') обязательны.",
-      });
+    return res.status(400).json({
+      message:
+        "Имя, email, пароль и корректная роль ('admin' или 'master') обязательны.",
+    });
   }
   try {
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -70,11 +67,9 @@ exports.createEmployee = async (req, res) => {
     res.status(201).json(newEmployee);
   } catch (error) {
     if (error.code === "P2002") {
-      return res
-        .status(409)
-        .json({
-          message: "Пользователь с таким email или телефоном уже существует.",
-        });
+      return res.status(409).json({
+        message: "Пользователь с таким email или телефоном уже существует.",
+      });
     }
     res.status(500).json({ message: "Ошибка при создании сотрудника." });
   }

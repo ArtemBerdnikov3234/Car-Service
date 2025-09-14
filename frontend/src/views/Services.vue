@@ -4,7 +4,7 @@
       Наши услуги
     </h1>
 
-    <!-- Поле поиска (без изменений) -->
+    
     <div class="relative mx-auto mb-12 max-w-2xl">
       <div
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5"
@@ -19,17 +19,14 @@
       />
     </div>
 
-    <!-- Индикаторы загрузки и ошибки -->
+   
     <div v-if="loading" class="py-10 text-center text-secondary-text">
       <i class="fas fa-spinner fa-spin text-3xl"></i>
       <p class="mt-4">Загрузка услуг...</p>
     </div>
     <div v-if="error" class="py-10 text-center text-red-400">{{ error }}</div>
 
-    <!-- 
-      ОСНОВНОЕ ИЗМЕНЕНИЕ ЗДЕСЬ:
-      Новый дизайн карточек услуг.
-    -->
+  
     <section v-if="!loading && filteredServices.length">
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         <router-link
@@ -38,7 +35,7 @@
           :to="{ name: 'ServiceDetail', params: { id: service.service_id } }"
           class="group relative flex flex-col overflow-hidden rounded-2xl border border-brand-red-light bg-card-dark p-8 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-brand-red hover:shadow-2xl hover:shadow-black/50"
         >
-          <!-- Верхняя часть с названием и описанием -->
+          
           <div class="flex-grow">
             <h3
               class="mb-3 text-2xl font-bold text-white group-hover:text-brand-red"
@@ -54,7 +51,7 @@
             </p>
           </div>
 
-          <!-- Нижняя часть с ценой и иконками -->
+         
           <div class="mt-6 border-t border-white/10 pt-6">
             <div class="mb-4 flex items-center text-sm text-secondary-text">
               <i class="far fa-clock mr-2 text-brand-red"></i>
@@ -76,7 +73,7 @@
       </div>
     </section>
 
-    <!-- Сообщение "Услуги не найдены" -->
+    
     <div
       v-if="!loading && !filteredServices.length"
       class="py-10 text-center text-gray-500"

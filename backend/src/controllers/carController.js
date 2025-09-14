@@ -1,4 +1,3 @@
-// src/controllers/carController.js
 const { PrismaClient } = require("../../generated/prisma");
 const prisma = new PrismaClient();
 
@@ -28,12 +27,10 @@ exports.createCar = async (req, res) => {
     notes,
   } = req.body;
   if (!make || !model || !year_of_manufacture) {
-    return res
-      .status(400)
-      .json({
-        message:
-          "Поля 'Марка', 'Модель' и 'Год выпуска' обязательны для заполнения.",
-      });
+    return res.status(400).json({
+      message:
+        "Поля 'Марка', 'Модель' и 'Год выпуска' обязательны для заполнения.",
+    });
   }
   try {
     const newCar = await prisma.cars.create({
@@ -52,19 +49,15 @@ exports.createCar = async (req, res) => {
   } catch (error) {
     console.error("Create Car Error:", error);
     if (error.code === "P2002") {
-      return res
-        .status(409)
-        .json({
-          message: "Автомобиль с таким VIN или гос. номером уже существует.",
-        });
+      return res.status(409).json({
+        message: "Автомобиль с таким VIN или гос. номером уже существует.",
+      });
     }
     if (error.code === "P2000") {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Значение для одного из полей слишком длинное (например, VIN).",
-        });
+      return res.status(400).json({
+        message:
+          "Значение для одного из полей слишком длинное (например, VIN).",
+      });
     }
     res.status(500).json({ message: "Ошибка при добавлении автомобиля." });
   }
@@ -109,11 +102,9 @@ exports.updateCar = async (req, res) => {
   } catch (error) {
     console.error("Update Car Error:", error);
     if (error.code === "P2002") {
-      return res
-        .status(409)
-        .json({
-          message: "Автомобиль с таким VIN или гос. номером уже существует.",
-        });
+      return res.status(409).json({
+        message: "Автомобиль с таким VIN или гос. номером уже существует.",
+      });
     }
     res
       .status(500)
@@ -129,11 +120,9 @@ exports.deleteCar = async (req, res) => {
       where: { car_id: carId, owner_id: userId },
     });
     if (!car) {
-      return res
-        .status(404)
-        .json({
-          message: "Автомобиль не найден или у вас нет прав на его удаление.",
-        });
+      return res.status(404).json({
+        message: "Автомобиль не найден или у вас нет прав на его удаление.",
+      });
     }
 
     await prisma.cars.delete({ where: { car_id: carId } });
@@ -141,12 +130,10 @@ exports.deleteCar = async (req, res) => {
   } catch (error) {
     console.error("Delete Car Error:", error);
     if (error.code === "P2003") {
-      return res
-        .status(409)
-        .json({
-          message:
-            "Невозможно удалить автомобиль, так как он используется в записях на сервис.",
-        });
+      return res.status(409).json({
+        message:
+          "Невозможно удалить автомобиль, так как он используется в записях на сервис.",
+      });
     }
     res.status(500).json({ message: "Ошибка при удалении автомобиля." });
   }

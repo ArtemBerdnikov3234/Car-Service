@@ -4,12 +4,12 @@
       Новая запись
     </h1>
 
-    <!-- Индикатор шагов -->
+   
     <div class="mb-10 flex justify-center">
       <ol
         class="flex w-full max-w-3xl items-center text-sm font-medium text-secondary-text"
       >
-        <!-- Шаг 1 -->
+       
         <li
           class="flex w-full items-center after:w-full after:border-b after:border-white/20 after:content-['']"
           :class="{ 'text-brand-red': step >= 1 }"
@@ -27,7 +27,7 @@
             Автомобиль
           </div>
         </li>
-        <!-- Шаг 2 -->
+      
         <li
           class="flex w-full items-center after:w-full after:border-b after:border-white/20 after:content-['']"
           :class="{ 'text-brand-red': step >= 2 }"
@@ -45,7 +45,7 @@
             Услуги
           </div>
         </li>
-        <!-- Шаг 3 -->
+     
         <li
           class="flex w-full items-center after:w-full after:border-b after:border-white/20 after:content-['']"
           :class="{ 'text-brand-red': step >= 3 }"
@@ -63,7 +63,7 @@
             Время
           </div>
         </li>
-        <!-- Шаг 4 -->
+   
         <li class="flex items-center" :class="{ 'text-brand-red': step >= 4 }">
           <div class="flex items-center">
             <span
@@ -80,11 +80,11 @@
       </ol>
     </div>
 
-    <!-- Основной блок Wizard -->
+ 
     <div
       class="rounded-2xl border border-brand-red-light bg-card-dark p-8 shadow-2xl"
     >
-      <!-- Шаг 1 -->
+   
       <div v-if="step === 1">
         <h2 class="mb-8 text-center text-3xl font-bold text-white">
           Шаг 1: Выберите автомобиль
@@ -128,7 +128,7 @@
         </div>
       </div>
 
-      <!-- Шаг 2 -->
+      
       <div v-if="step === 2">
         <h2 class="mb-8 text-center text-3xl font-bold text-white">
           Шаг 2: Выберите услуги
@@ -177,13 +177,13 @@
         </div>
       </div>
 
-      <!-- Шаг 3: Выбор даты и времени -->
+  
       <div v-if="step === 3">
         <h2 class="mb-8 text-center text-3xl font-bold text-white">
           Шаг 3: Выберите дату и время
         </h2>
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <!-- Календарь -->
+       
           <div>
             <div class="mb-4 flex items-center justify-between">
               <button
@@ -231,7 +231,6 @@
             </div>
           </div>
 
-          <!-- Выбор времени -->
           <div
             class="border-t border-white/10 pt-8 md:border-t-0 md:border-l md:pt-0 md:pl-8"
           >
@@ -283,7 +282,7 @@
         </div>
       </div>
 
-      <!-- Шаг 4 -->
+      
       <div v-if="step === 4">
         <h2 class="mb-8 text-center text-3xl font-bold text-white">
           Шаг 4: Проверьте и подтвердите
@@ -373,7 +372,6 @@ import { useRouter } from "vue-router";
 import apiClient from "@/services/api";
 import BaseButton from "@/components/BaseButton.vue";
 
-// === ОСНОВНЫЕ ПЕРЕМЕННЫЕ ===
 const step = ref(1);
 const router = useRouter();
 const userCars = ref([]);
@@ -386,7 +384,7 @@ const selectedDate = ref(null);
 const availableSlots = ref([]);
 const selectedTime = ref(null);
 
-// === СТАТУСЫ ЗАГРУЗКИ ===
+
 const carsLoading = ref(true);
 const servicesLoading = ref(true);
 const bookingsLoading = ref(true);
@@ -395,12 +393,9 @@ const slotsError = ref(null);
 const bookingLoading = ref(false);
 const bookingError = ref(null);
 
-// === ФУНКЦИИ ===
 
-/**
- * Надежная функция для форматирования объекта Date в строку YYYY-MM-DD,
- * игнорируя часовые пояса.
- */
+
+
 const formatDateToYYYYMMDD = (date) => {
   if (!date) return null;
   const year = date.getFullYear();
@@ -409,9 +404,6 @@ const formatDateToYYYYMMDD = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-/**
- * Загрузка всех начальных данных при монтировании компонента
- */
 onMounted(async () => {
   bookingsLoading.value = true;
   carsLoading.value = true;
@@ -436,9 +428,7 @@ onMounted(async () => {
   }
 });
 
-/**
- * Запрос свободных слотов на сервере
- */
+
 const triggerSlotsRequest = async () => {
   if (!selectedDate.value || selectedServiceIds.value.size === 0) {
     availableSlots.value = [];
@@ -468,21 +458,17 @@ const triggerSlotsRequest = async () => {
 };
 watch(selectedDate, triggerSlotsRequest);
 
-/**
- * Проверяет, есть ли у пользователя запись на эту дату
- */
+
 const isDateBookedByMe = (dateStr) => {
   if (!dateStr || bookingsLoading.value) return false;
-  // Преобразуем UTC дату с сервера в локальную YYYY-MM-DD для сравнения
+ 
   return myBookings.value.some((booking) => {
     const localDate = new Date(booking.start_time);
     return formatDateToYYYYMMDD(localDate) === dateStr;
   });
 };
 
-/**
- * Проверяет, есть ли у пользователя запись на это конкретное время
- */
+
 const isTimeSlotBookedByMe = (timeStr) => {
   if (!selectedDate.value || !timeStr) return false;
   return myBookings.value.some((booking) => {
@@ -503,7 +489,7 @@ const selectDate = (day) => {
 };
 
 const selectTime = (time) => {
-  if (isTimeSlotBookedByMe(time)) return; // Блокируем клик
+  if (isTimeSlotBookedByMe(time)) return; 
   selectedTime.value = time;
 };
 
@@ -654,8 +640,7 @@ const submitBooking = async () => {
   bookingLoading.value = true;
   bookingError.value = null;
 
-  // Формируем строку без информации о часовом поясе.
-  // Бэкенд (new Date()) интерпретирует ее как локальное время сервера.
+
   const startTimeString = `${selectedDate.value}T${selectedTime.value}:00`;
 
   const bookingData = {

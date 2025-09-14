@@ -1,4 +1,3 @@
-// src/routes/scheduleRoutes.js
 const express = require("express");
 const scheduleController = require("../controllers/scheduleController");
 const { protect, isAdmin } = require("../middleware/authMiddleware");

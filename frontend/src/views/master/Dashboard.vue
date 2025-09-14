@@ -1,4 +1,3 @@
-<!-- src/views/master/Dashboard.vue -->
 <template>
   <div class="container mx-auto px-6 py-12">
     <div

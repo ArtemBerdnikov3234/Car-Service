@@ -1,9 +1,6 @@
-// src/controllers/boxController.js
-
 const { PrismaClient } = require("../../generated/prisma");
 const prisma = new PrismaClient();
 
-// --- ПОЛУЧИТЬ ВСЕ АКТИВНЫЕ БОКСЫ ---
 exports.getAllBoxes = async (req, res) => {
   try {
     const boxes = await prisma.boxes.findMany({

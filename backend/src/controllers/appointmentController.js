@@ -1,5 +1,3 @@
-// src/controllers/appointmentController.js
-
 const { PrismaClient } = require("../../generated/prisma");
 const prisma = new PrismaClient();
 const {
@@ -11,7 +9,6 @@ const {
   eachMinuteOfInterval,
 } = require("date-fns");
 
-// --- ДЛЯ КЛИЕНТА: ПОЛУЧИТЬ СПИСОК СВОИХ ЗАПИСЕЙ ---
 exports.getMyBookings = async (req, res) => {
   const userId = req.user.userId;
   try {
@@ -42,7 +39,6 @@ exports.getMyBookings = async (req, res) => {
   }
 };
 
-// --- ДЛЯ КЛИЕНТА: СОЗДАТЬ НОВУЮ ЗАПИСЬ ---
 exports.createBooking = async (req, res) => {
   const userId = req.user.userId;
   const { car_id, service_ids, start_time, notes } = req.body;
@@ -109,7 +105,6 @@ exports.createBooking = async (req, res) => {
   }
 };
 
-// --- ДЛЯ КЛИЕНТА И АДМИНА: ОТМЕНА ЗАПИСИ ---
 exports.cancelBooking = async (req, res) => {
   const appointmentId = parseInt(req.params.id);
   const { userId, role } = req.user;
@@ -146,7 +141,6 @@ exports.cancelBooking = async (req, res) => {
   }
 };
 
-// --- ДЛЯ АДМИНА: ПОЛУЧИТЬ ВСЕ ЗАПИСИ ---
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await prisma.appointments.findMany({
@@ -174,17 +168,13 @@ exports.getAllBookings = async (req, res) => {
   }
 };
 
-// ******** (ПОЛНОСТЬЮ ПЕРЕПИСАННАЯ И ИСПРАВЛЕННАЯ ФУНКЦИЯ) ********
 exports.getAvailableSlots = async (req, res) => {
   const { date, serviceIds } = req.query;
 
-  // 1. Валидация входных данных
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !serviceIds) {
-    return res
-      .status(400)
-      .json({
-        message: "Необходимы параметры: date (YYYY-MM-DD) и serviceIds.",
-      });
+    return res.status(400).json({
+      message: "Необходимы параметры: date (YYYY-MM-DD) и serviceIds.",
+    });
   }
   const ids = serviceIds
     .split(",")
@@ -197,7 +187,6 @@ exports.getAvailableSlots = async (req, res) => {
   }
 
   try {
-    // 2. Сбор всей необходимой информации
     const requestedDate = parseISO(date);
     const dayOfWeek = requestedDate.getUTCDay();
 
@@ -248,7 +237,6 @@ exports.getAvailableSlots = async (req, res) => {
 
     if (suitableMasters.length === 0) return res.status(200).json([]);
 
-    // 3. Создание "таймлайнов занятости" для каждого ресурса
     const masterBusySlots = new Map();
     suitableMasters.forEach((m) => masterBusySlots.set(m.employee_id, []));
     appointmentsOnDate.forEach((app) => {
@@ -259,11 +247,9 @@ exports.getAvailableSlots = async (req, res) => {
       }
     });
 
-    // 4. Генерация и проверка потенциальных слотов
     const availableSlots = new Set();
     const SLOT_INTERVAL = 30;
 
-    // Находим самое раннее начало и самое позднее окончание рабочего дня среди всех мастеров
     const earliestStart = new Date(
       Math.min(
         ...suitableMasters.flatMap((m) =>
@@ -300,10 +286,8 @@ exports.getAvailableSlots = async (req, res) => {
     for (const slotStart of potentialStartTimes) {
       const slotEnd = addMinutes(slotStart, totalDuration);
 
-      // 4.1. Проверка доступности мастера
       let isMasterAvailable = false;
       for (const master of suitableMasters) {
-        // Мастер должен работать в этот временной интервал
         const schedule = master.work_schedules[0];
         const workStart = new Date(requestedDate).setUTCHours(
           schedule.start_time.getUTCHours(),
@@ -319,20 +303,18 @@ exports.getAvailableSlots = async (req, res) => {
         );
 
         if (slotStart >= workStart && slotEnd <= workEnd) {
-          // И мастер не должен быть занят в это время
           const busySlots = masterBusySlots.get(master.employee_id);
           const isBusy = busySlots.some(
             (busy) => slotStart < busy.end && slotEnd > busy.start
           );
           if (!isBusy) {
             isMasterAvailable = true;
-            break; // Нашли свободного мастера, дальше можно не искать
+            break;
           }
         }
       }
-      if (!isMasterAvailable) continue; // Если ни один мастер не свободен, пропускаем слот
+      if (!isMasterAvailable) continue;
 
-      // 4.2. Проверка доступности бокса
       const overlappingAppointments = appointmentsOnDate.filter(
         (app) => slotStart < app.end_time && slotEnd > app.start_time
       );
@@ -348,9 +330,8 @@ exports.getAvailableSlots = async (req, res) => {
       const isBoxAvailable = allBoxes.some(
         (box) => (busyBoxCounts.get(box.box_id) || 0) < box.capacity
       );
-      if (!isBoxAvailable) continue; // Если нет свободных боксов, пропускаем слот
+      if (!isBoxAvailable) continue;
 
-      // Если все проверки пройдены, добавляем слот
       availableSlots.add(format(slotStart, "HH:mm"));
     }
 
@@ -361,7 +342,6 @@ exports.getAvailableSlots = async (req, res) => {
   }
 };
 
-// --- ДЛЯ МАСТЕРА И АДМИНА: ИЗМЕНИТЬ СТАТУС ЗАПИСИ ---
 exports.updateBookingStatus = async (req, res) => {
   const appointmentId = parseInt(req.params.id);
   const { status } = req.body;
@@ -402,7 +382,6 @@ exports.updateBookingStatus = async (req, res) => {
   }
 };
 
-// --- ДЛЯ МАСТЕРА: ПОЛУЧИТЬ СВОИ ЗАДАЧИ ---
 exports.getMyTasks = async (req, res) => {
   try {
     const employee = await prisma.employees.findUnique({
@@ -433,7 +412,6 @@ exports.getMyTasks = async (req, res) => {
   }
 };
 
-// --- АДМИНСКИЕ ФУНКЦИИ ---
 exports.createBookingByAdmin = async (req, res) => {
   res.status(501).json({
     message: "Создание записи от имени администратора еще не реализовано.",

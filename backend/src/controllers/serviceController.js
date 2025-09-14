@@ -1,4 +1,3 @@
-// src/controllers/serviceController.js
 const { PrismaClient } = require("../../generated/prisma");
 const prisma = new PrismaClient();
 
