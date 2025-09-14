@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/статус-в%20разработке-yellow.svg" alt="Статус проекта">
   <img src="https://img.shields.io/badge/стек-V³EPN-blueviolet.svg" alt="Стек технологий">
-  <img src="https://img.shields.io/badge/лицензия-MIT-blue.svg" alt="Лицензия">
+
 </p>
 
 <p align="center">
