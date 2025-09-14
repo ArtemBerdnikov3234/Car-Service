@@ -1,8 +1,14 @@
-// src/controllers/appointmentController.js
 const { PrismaClient, Prisma } = require("../../generated/prisma");
 const prisma = new PrismaClient();
+const {
+  addMinutes,
+  format,
+  parseISO,
+  startOfDay,
+  endOfDay,
+} = require("date-fns");
 
-// --- ДЛЯ КЛИЕНТА: ПОЛУЧИТЬ СПИСОК СВОИХ ЗАПИСЕЙ (АКТИВНЫХ И ПРОШЕДШИХ) ---
+// --- ДЛЯ КЛИЕНТА: ПОЛУЧИТЬ СПИСОК СВОИХ ЗАПИСЕЙ ---
 exports.getMyBookings = async (req, res) => {
   const userId = req.user.userId;
   try {
@@ -38,11 +44,9 @@ exports.createBooking = async (req, res) => {
   const { car_id, service_ids, start_time, notes } = req.body;
 
   if (!car_id || !service_ids || !service_ids.length || !start_time) {
-    return res
-      .status(400)
-      .json({
-        message: "Необходимо указать автомобиль, услуги и время записи.",
-      });
+    return res.status(400).json({
+      message: "Необходимо указать автомобиль, услуги и время записи.",
+    });
   }
 
   try {
@@ -97,16 +101,13 @@ exports.createBooking = async (req, res) => {
     res.status(201).json(newAppointment);
   } catch (error) {
     console.error("Create Booking Error:", error);
-    // Ловим ошибку от EXCLUDE constraint (конфликт расписания)
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.message.includes("violates exclusion constraint")
     ) {
-      return res
-        .status(409)
-        .json({
-          message: "Выбранное время уже занято. Пожалуйста, выберите другое.",
-        });
+      return res.status(409).json({
+        message: "Выбранное время уже занято. Пожалуйста, выберите другое.",
+      });
     }
     res.status(500).json({ message: "Не удалось создать запись." });
   }
@@ -132,11 +133,9 @@ exports.cancelBooking = async (req, res) => {
     }
 
     if (["in_progress", "completed"].includes(appointment.status)) {
-      return res
-        .status(400)
-        .json({
-          message: "Невозможно отменить уже начатую или завершенную работу.",
-        });
+      return res.status(400).json({
+        message: "Невозможно отменить уже начатую или завершенную работу.",
+      });
     }
 
     const cancelledAppointment = await prisma.appointments.update({
@@ -151,7 +150,7 @@ exports.cancelBooking = async (req, res) => {
   }
 };
 
-// --- ДЛЯ АДМИНА: ПОЛУЧИТЬ ВСЕ ЗАПИСИ (ДЛЯ КАЛЕНДАРЯ) ---
+// --- ДЛЯ АДМИНА: ПОЛУЧИТЬ ВСЕ ЗАПИСИ ---
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await prisma.appointments.findMany({
@@ -172,6 +171,78 @@ exports.getAllBookings = async (req, res) => {
     console.error("Get All Bookings Error:", error);
     res.status(500).json({ message: "Ошибка получения всех записей." });
   }
+};
+
+// --- (НОВАЯ ИСПРАВЛЕННАЯ ФУНКЦИЯ) ДЛЯ ВСЕХ: ПОЛУЧИТЬ СВОБОДНЫЕ СЛОТЫ ---
+exports.getAvailableSlots = async (req, res) => {
+  const { date, duration } = req.query;
+
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res
+      .status(400)
+      .json({ message: "Неверный формат даты. Ожидается YYYY-MM-DD." });
+  }
+
+  const requestedDuration = parseInt(duration, 10) || 0;
+
+  const WORK_HOURS_START = 9;
+  const WORK_HOURS_END = 18;
+  const SLOT_DURATION_MINUTES = 30;
+
+  const requestedDate = parseISO(date);
+  const workDayEndTime = new Date(requestedDate);
+  workDayEndTime.setHours(WORK_HOURS_END, 0, 0, 0);
+
+  const allPossibleSlots = [];
+  let currentTime = new Date(requestedDate);
+  currentTime.setHours(WORK_HOURS_START, 0, 0, 0);
+
+  const lastPossibleStartTime = addMinutes(workDayEndTime, -requestedDuration);
+
+  while (currentTime <= lastPossibleStartTime) {
+    allPossibleSlots.push(format(currentTime, "HH:mm"));
+    currentTime = addMinutes(currentTime, SLOT_DURATION_MINUTES);
+  }
+
+  const appointmentsOnDate = await prisma.appointments.findMany({
+    where: {
+      start_time: {
+        gte: startOfDay(requestedDate),
+        lt: endOfDay(requestedDate),
+      },
+      status: { notIn: ["cancelled"] },
+    },
+    include: {
+      appointment_services: {
+        include: {
+          services: true,
+        },
+      },
+    },
+  });
+
+  const busySlots = new Set();
+  appointmentsOnDate.forEach((appointment) => {
+    const startTime = appointment.start_time;
+    const totalDuration = appointment.appointment_services.reduce(
+      (sum, as) => sum + (as.services ? as.services.duration_minutes : 0),
+      0
+    );
+
+    let busyTime = new Date(startTime);
+    const appointmentEndTime = addMinutes(busyTime, totalDuration);
+
+    while (busyTime < appointmentEndTime) {
+      busySlots.add(format(busyTime, "HH:mm"));
+      busyTime = addMinutes(busyTime, SLOT_DURATION_MINUTES);
+    }
+  });
+
+  const availableSlots = allPossibleSlots.filter(
+    (slot) => !busySlots.has(slot)
+  );
+
+  res.status(200).json(availableSlots);
 };
 
 // --- ДЛЯ МАСТЕРА И АДМИНА: ИЗМЕНИТЬ СТАТУС ЗАПИСИ ---
@@ -241,16 +312,12 @@ exports.getMyTasks = async (req, res) => {
 
 // --- ЗАГЛУШКИ ДЛЯ СЛОЖНОЙ АДМИНСКОЙ ЛОГИКИ ---
 exports.createBookingByAdmin = async (req, res) => {
-  res
-    .status(501)
-    .json({
-      message: "Создание записи от имени администратора еще не реализовано.",
-    });
+  res.status(501).json({
+    message: "Создание записи от имени администратора еще не реализовано.",
+  });
 };
 exports.updateBookingByAdmin = async (req, res) => {
-  res
-    .status(501)
-    .json({
-      message: "Редактирование записи администратором еще не реализовано.",
-    });
+  res.status(501).json({
+    message: "Редактирование записи администратором еще не реализовано.",
+  });
 };

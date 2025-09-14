@@ -1,9 +1,10 @@
 <template>
-  <main class="container mx-auto px-6 py-12">
-    <h1 class="text-5xl font-bold text-center mb-12 text-brand-white">
+  <main class="container mx-auto px-6 py-24">
+    <h1 class="mb-12 text-center text-5xl font-bold text-brand-red">
       Наши услуги
     </h1>
 
+    <!-- Поле поиска (без изменений) -->
     <div class="relative mx-auto mb-12 max-w-2xl">
       <div
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5"
@@ -14,58 +15,74 @@
         v-model="searchQuery"
         type="text"
         placeholder="Поиск по названию услуги..."
-        class="w-full rounded-full border border-white/20 bg-light-dark py-4 pl-14 pr-6 text-white placeholder-secondary-text focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/50"
+        class="w-full rounded-full border border-white/20 bg-light-dark py-4 pl-14 pr-6 text-white placeholder-secondary-text transition focus:border-brand-red focus:outline-none focus:ring-0"
       />
     </div>
 
-    <div v-if="loading" class="text-center py-10 text-brand-text">
-      Загрузка услуг...
+    <!-- Индикаторы загрузки и ошибки -->
+    <div v-if="loading" class="py-10 text-center text-secondary-text">
+      <i class="fas fa-spinner fa-spin text-3xl"></i>
+      <p class="mt-4">Загрузка услуг...</p>
     </div>
-    <div v-if="error" class="text-center py-10 text-red-400">{{ error }}</div>
+    <div v-if="error" class="py-10 text-center text-red-400">{{ error }}</div>
 
+    <!-- 
+      ОСНОВНОЕ ИЗМЕНЕНИЕ ЗДЕСЬ:
+      Новый дизайн карточек услуг.
+    -->
     <section v-if="!loading && filteredServices.length">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         <router-link
           v-for="service in filteredServices"
           :key="service.service_id"
           :to="{ name: 'ServiceDetail', params: { id: service.service_id } }"
-          class="group block bg-brand-gray rounded-xl shadow-lg p-8 flex flex-col h-full border border-brand-light-gray hover:border-brand-accent transition-all duration-300 transform hover:-translate-y-1"
+          class="group relative flex flex-col overflow-hidden rounded-2xl border border-brand-red-light bg-card-dark p-8 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-brand-red hover:shadow-2xl hover:shadow-black/50"
         >
-          <h3
-            class="font-bold text-2xl mb-3 text-brand-white group-hover:text-brand-accent transition-colors"
-          >
-            {{ service.name }}
-          </h3>
-          <p class="text-brand-text mb-5 flex-grow min-h-[60px]">
-            {{
-              service.description ||
-              "Качественное выполнение работ по стандартам производителя."
-            }}
-          </p>
-          <div class="text-sm text-gray-400 mb-5">
-            <p>
-              <i class="far fa-clock mr-2 text-brand-accent"></i>Длительность:
-              ~{{ service.duration_minutes }} минут
+          <!-- Верхняя часть с названием и описанием -->
+          <div class="flex-grow">
+            <h3
+              class="mb-3 text-2xl font-bold text-white group-hover:text-brand-red"
+            >
+              {{ service.name }}
+            </h3>
+            <p class="min-h-[72px] text-secondary-text">
+              {{
+                service.description?.substring(0, 100) +
+                  (service.description?.length > 100 ? "..." : "") ||
+                "Качественное выполнение работ по стандартам производителя."
+              }}
             </p>
           </div>
-          <div
-            class="flex justify-between items-center mt-auto border-t border-brand-light-gray pt-5"
-          >
-            <span class="font-bold text-2xl text-brand-white"
-              >{{ service.price }} ₽</span
-            >
-            <span class="text-brand-accent font-bold">Подробнее</span>
+
+          <!-- Нижняя часть с ценой и иконками -->
+          <div class="mt-6 border-t border-white/10 pt-6">
+            <div class="mb-4 flex items-center text-sm text-secondary-text">
+              <i class="far fa-clock mr-2 text-brand-red"></i>
+              <span>~{{ service.duration_minutes }} минут</span>
+            </div>
+            <div class="flex items-end justify-between">
+              <div>
+                <p class="text-sm text-secondary-text">Стоимость</p>
+                <p class="text-3xl font-bold text-white">
+                  {{ service.price }} ₽
+                </p>
+              </div>
+              <i
+                class="fas fa-arrow-right text-2xl text-white/30 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white"
+              ></i>
+            </div>
           </div>
         </router-link>
       </div>
     </section>
 
+    <!-- Сообщение "Услуги не найдены" -->
     <div
       v-if="!loading && !filteredServices.length"
-      class="text-center py-10 text-gray-500"
+      class="py-10 text-center text-gray-500"
     >
-      <h2 class="text-2xl font-bold text-brand-white">Услуги не найдены</h2>
-      <p class="mt-2">
+      <h2 class="text-2xl font-bold text-white">Услуги не найдены</h2>
+      <p class="mt-2 text-secondary-text">
         По вашему запросу ничего не найдено. Попробуйте изменить поисковый
         запрос.
       </p>
@@ -84,10 +101,12 @@ const searchQuery = ref("");
 
 const filteredServices = computed(() => {
   if (!searchQuery.value) {
-    return allServices.value;
+    return allServices.value.filter((service) => service.is_active);
   }
-  return allServices.value.filter((service) =>
-    service.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  return allServices.value.filter(
+    (service) =>
+      service.is_active &&
+      service.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 

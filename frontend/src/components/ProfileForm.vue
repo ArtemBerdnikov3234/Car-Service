@@ -89,7 +89,7 @@ const submitProfile = async () => {
     await apiClient.put("/users/me", form);
     successMessage.value = "Профиль успешно обновлен!";
     emit("profile-updated");
-    setTimeout(() => emit("close"), 2000); // Закрыть через 2 секунды
+    setTimeout(() => emit("close"), 2000);
   } catch (err) {
     error.value =
       err.response?.data?.message || "Ошибка при обновлении профиля.";
