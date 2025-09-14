@@ -1,4 +1,3 @@
-<!-- src/components/ProfileForm.vue -->
 <template>
   <div
     class="bg-brand-gray rounded-xl shadow-xl p-8 border border-brand-light-gray max-w-3xl mx-auto"

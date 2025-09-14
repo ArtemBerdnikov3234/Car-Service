@@ -1,50 +1,32 @@
-<!-- src/components/CarForm.vue -->
 <template>
-  <div
-    class="bg-gray-100 rounded-xl shadow-lg p-8 border border-gray-300 max-w-3xl mx-auto"
-  >
-    <h1 class="text-4xl lg:text-5xl font-bold text-center mb-10 text-gray-900">
+  <div>
+    <h1 class="mb-8 text-center text-3xl font-bold text-brand-red">
       {{ carToEdit ? "Редактирование" : "Добавление" }} автомобиля
     </h1>
     <form @submit.prevent="submitForm" class="space-y-6">
-      <!-- Марка / Модель -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label for="make" class="block text-gray-700 font-semibold mb-2"
-            >Марка</label
-          >
-          <input
-            v-model="form.make"
-            type="text"
-            id="make"
-            placeholder="Например, Toyota"
-            class="w-full px-4 py-3 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-900 placeholder-gray-500"
-            required
-          />
-        </div>
-        <div>
-          <label for="model" class="block text-gray-700 font-semibold mb-2"
-            >Модель</label
-          >
-          <input
-            v-model="form.model"
-            type="text"
-            id="model"
-            placeholder="Например, Camry"
-            class="w-full px-4 py-3 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-900 placeholder-gray-500"
-            required
-          />
-        </div>
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <BaseInput
+          v-model="form.make"
+          label="Марка"
+          placeholder="Например, Toyota"
+          required
+        />
+        <BaseInput
+          v-model="form.model"
+          label="Модель"
+          placeholder="Например, Camry"
+          required
+        />
       </div>
-      <!-- Год -->
+
       <div>
-        <label for="year" class="block text-gray-700 font-semibold mb-2"
+        <label for="year" class="mb-2 block font-semibold text-secondary-text"
           >Год выпуска</label
         >
         <select
           v-model.number="form.year_of_manufacture"
           id="year"
-          class="w-full px-4 py-3 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-900 placeholder-gray-500"
+          class="w-full rounded-lg border border-white/20 bg-dark px-4 py-3 text-white transition focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/50"
           required
         >
           <option disabled value="">Выберите год</option>
@@ -53,97 +35,64 @@
           </option>
         </select>
       </div>
-      <!-- VIN -->
-      <div>
-        <label for="vin" class="block text-gray-700 font-semibold mb-2"
-          >VIN-код</label
-        >
-        <input
-          v-model="form.vin_code"
-          type="text"
-          id="vin"
-          placeholder="XXXXXXXXXXXXXXXXX"
-          maxlength="17"
-          class="w-full px-4 py-3 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-900 placeholder-gray-500"
+
+      <BaseInput
+        v-model="form.vin_code"
+        label="VIN-код"
+        placeholder="XXXXXXXXXXXXXXXXX"
+        maxlength="17"
+      />
+
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <BaseInput
+          v-model="form.license_plate"
+          label="Госномер"
+          placeholder="А123БВ 777"
         />
-        <p class="text-xs text-gray-500 mt-1">Должно быть 17 символов</p>
+        <BaseInput
+          v-model.number="form.mileage"
+          type="number"
+          label="Пробег (км)"
+          placeholder="50000"
+        />
       </div>
-      <!-- Госномер / Пробег -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label
-            for="license_plate"
-            class="block text-gray-700 font-semibold mb-2"
-            >Госномер</label
-          >
-          <input
-            v-model="form.license_plate"
-            type="text"
-            id="license_plate"
-            placeholder="А123БВ 777"
-            class="w-full px-4 py-3 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-900 placeholder-gray-500"
-          />
-        </div>
-        <div>
-          <label for="mileage" class="block text-gray-700 font-semibold mb-2"
-            >Пробег (км)</label
-          >
-          <input
-            v-model.number="form.mileage"
-            type="number"
-            id="mileage"
-            placeholder="50000"
-            class="w-full px-4 py-3 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-900 placeholder-gray-500"
-          />
-        </div>
-      </div>
-      <!-- Примечания -->
+
       <div>
-        <label for="notes" class="block text-gray-700 font-semibold mb-2"
+        <label for="notes" class="mb-2 block font-semibold text-secondary-text"
           >Примечания</label
         >
         <textarea
           v-model="form.notes"
           id="notes"
-          rows="4"
-          class="w-full px-4 py-3 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-900 placeholder-gray-500"
+          rows="3"
+          class="w-full rounded-lg border border-white/20 bg-dark px-4 py-3 text-white transition focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/50"
           placeholder="Дополнительная информация (например, установлено ГБО)"
         ></textarea>
       </div>
-      <p v-if="error" class="text-red-500 text-center">{{ error }}</p>
-      <!-- Кнопки -->
-      <div class="pt-6 flex justify-end gap-4 border-t border-gray-300">
-        <button
-          @click="$emit('close')"
-          type="button"
-          class="py-3 px-8 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
+
+      <p v-if="error" class="text-center text-red-400">{{ error }}</p>
+
+      <div class="flex justify-end gap-4 border-t border-white/10 pt-6">
+        <BaseButton type="button" @click="$emit('close')" variant="secondary"
+          >Отмена</BaseButton
         >
-          Отмена
-        </button>
-        <button
-          type="submit"
-          :disabled="loading"
-          class="py-3 px-8 bg-gray-900 hover:bg-gray-700 text-white font-bold rounded-lg transition flex items-center disabled:opacity-50"
-        >
-          <i v-if="!loading" class="fas fa-save mr-3"></i>
-          <span>{{ loading ? "Сохранение..." : "Сохранить" }}</span>
-        </button>
+        <BaseButton type="submit" :disabled="loading">
+          <i v-if="!loading" class="fas fa-save mr-2"></i>
+          {{ loading ? "Сохранение..." : "Сохранить" }}
+        </BaseButton>
       </div>
     </form>
   </div>
 </template>
 
-<!-- Блок <style> полностью удален -->
-
 <script setup>
 import { ref, reactive, watch, computed } from "vue";
 import apiClient from "@/services/api";
+import BaseInput from "@/components/BaseInput.vue";
+import BaseButton from "@/components/BaseButton.vue";
 
-const props = defineProps({
-  carToEdit: { type: Object, default: null },
-});
+const props = defineProps({ carToEdit: { type: Object, default: null } });
 const emit = defineEmits(["close", "car-saved"]);
-
 const form = reactive({
   make: "",
   model: "",
@@ -193,7 +142,7 @@ const submitForm = async () => {
       Object.entries(form).filter(([_, v]) => v != null && v !== "")
     );
     if (props.carToEdit?.car_id) {
-      await apiClient.put(`/cars/${props.carToEdit.car_id}`, carData);
+      await apiClient.put(`/cars/${props.carToTedit.car_id}`, carData);
     } else {
       await apiClient.post("/cars", carData);
     }

@@ -1,4 +1,3 @@
-<!-- src/components/ServiceForm.vue -->
 <template>
   <div>
     <h2 class="text-3xl font-bold mb-6 text-gray-800">
@@ -72,7 +71,7 @@
 <script setup>
 import { ref, reactive, watch } from "vue";
 import apiClient from "@/services/api";
-import BaseInput from "@/components/BaseInput.vue"; // Импортируем наш базовый инпут
+import BaseInput from "@/components/BaseInput.vue";
 
 const props = defineProps({
   serviceToEdit: { type: Object, default: null },
@@ -91,14 +90,12 @@ const form = reactive({
 const loading = ref(false);
 const error = ref(null);
 
-// Заполняем форму, если передали услугу для редактирования
 watch(
   () => props.serviceToEdit,
   (newVal) => {
     if (newVal) {
       Object.assign(form, { ...newVal });
     } else {
-      // Сбрасываем форму для создания новой услуги
       Object.assign(form, {
         name: "",
         description: "",

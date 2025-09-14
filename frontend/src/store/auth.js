@@ -1,4 +1,3 @@
-// src/store/auth.js
 import { defineStore } from "pinia";
 import apiClient from "@/services/api";
 import router from "@/router";
@@ -25,8 +24,7 @@ export const useAuthStore = defineStore("auth", {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
 
-        // --- ОТЛАДКА И УЛУЧШЕННЫЙ РЕДИРЕКТ ---
-        console.log("Login successful. User role:", user.role); // <-- Смотрим в консоль браузера!
+        console.log("Login successful. User role:", user.role);
 
         if (user.role === "admin") {
           console.log("Redirecting to AdminDashboard...");
@@ -38,10 +36,9 @@ export const useAuthStore = defineStore("auth", {
           console.log("Redirecting to ClientDashboard...");
           router.push({ name: "ClientDashboard" });
         }
-        // ------------------------------------
       } catch (error) {
         console.error("Login action failed:", error);
-        // Передаем ошибку дальше, чтобы компонент Login мог ее показать
+
         throw error;
       }
     },

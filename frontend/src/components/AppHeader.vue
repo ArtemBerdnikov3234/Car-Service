@@ -1,78 +1,132 @@
-<!-- src/components/AppHeader.vue -->
 <template>
-  <header class="bg-gray-100 shadow border-b border-gray-300">
-    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+  <header
+    ref="headerRef"
+    class="fixed top-0 left-0 right-0 z-50 border-b border-brand-red-light bg-light-dark bg-opacity-90 py-4 px-6 backdrop-blur-lg"
+  >
+    <div class="container mx-auto flex items-center justify-between">
       <router-link
         :to="{ name: 'Home' }"
-        class="text-3xl font-bold text-gray-900"
+        class="text-3xl font-bold text-brand-red"
       >
-        Auto<span class="text-gray-500">Service</span>
+        Auto<span class="text-white">Service</span>
       </router-link>
-      <nav class="hidden md:flex space-x-8 items-center">
+
+      <nav class="hidden items-center space-x-8 md:flex">
+        <template v-if="authStore.isAuthenticated">
+          <span class="text-secondary-text"
+            >Привет, {{ authStore.user?.firstName }}!</span
+          >
+        </template>
+
         <router-link
           :to="{ name: 'Services' }"
-          class="text-gray-600 hover:text-gray-900 transition"
-          >Услуги</router-link
+          class="group relative font-medium text-white transition duration-300 hover:text-brand-red"
         >
-        <a href="#" class="text-gray-600 hover:text-gray-900 transition"
-          >Контакты</a
-        >
+          <span>Услуги</span>
+          <span
+            class="absolute bottom-[-5px] left-0 h-[2px] w-0 bg-brand-red transition-all duration-300 group-hover:w-full"
+          ></span>
+        </router-link>
 
         <template v-if="!authStore.isAuthenticated">
           <router-link
             :to="{ name: 'Login' }"
-            class="py-2 px-5 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition"
+            class="font-semibold text-white transition hover:text-brand-red"
             >Вход</router-link
           >
-          <router-link
-            :to="{ name: 'Register' }"
-            class="py-2 px-5 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition"
-            >Регистрация</router-link
+          <BaseButton :to="{ name: 'Register' }" tag="router-link"
+            >Регистрация</BaseButton
           >
         </template>
+
         <template v-else>
-          <span class="text-gray-600"
-            >Привет, {{ authStore.user?.firstName }}!</span
-          >
           <router-link
             v-if="authStore.isClient"
             :to="{ name: 'ClientDashboard' }"
-            class="py-2 px-4 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition"
-            >Кабинет</router-link
+            class="group relative font-medium text-white transition duration-300 hover:text-brand-red"
           >
+            <span>Кабинет</span>
+            <span
+              class="absolute bottom-[-5px] left-0 h-[2px] w-0 bg-brand-red transition-all duration-300 group-hover:w-full"
+            ></span>
+          </router-link>
           <router-link
             v-if="authStore.isAdmin"
             :to="{ name: 'AdminDashboard' }"
-            class="py-2 px-4 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition"
-            >Панель</router-link
+            class="group relative font-medium text-white transition duration-300 hover:text-brand-red"
           >
-          <button
-            @click="authStore.logout()"
-            class="py-2 px-4 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition"
+            <span>Панель</span>
+            <span
+              class="absolute bottom-[-5px] left-0 h-[2px] w-0 bg-brand-red transition-all duration-300 group-hover:w-full"
+            ></span>
+          </router-link>
+          <BaseButton
+            @click="showLogoutConfirm = true"
+            variant="primary"
+            class="!py-2 !px-6"
           >
             Выйти
-          </button>
+          </BaseButton>
         </template>
       </nav>
+
       <div class="md:hidden">
         <button
           @click="isMenuOpen = !isMenuOpen"
-          class="text-gray-900 focus:outline-none"
+          class="text-white focus:outline-none"
         >
           <i class="fas fa-bars text-xl"></i>
         </button>
       </div>
     </div>
-    <!-- Mobile Menu (optional) -->
-    <div v-if="isMenuOpen" class="md:hidden">
-      <!-- Add mobile navigation links here -->
-    </div>
   </header>
+
+  <ConfirmDialog
+    :show="showLogoutConfirm"
+    title="Подтвердите выход"
+    message="Вы действительно хотите выйти из своего аккаунта?"
+    @close="showLogoutConfirm = false"
+    @cancel="showLogoutConfirm = false"
+    @confirm="handleLogout"
+  />
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useAuthStore } from "@/store/auth";
+import BaseButton from "@/components/BaseButton.vue";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
+
 const authStore = useAuthStore();
 const isMenuOpen = ref(false);
+const headerRef = ref(null);
+const showLogoutConfirm = ref(false);
+
+const handleLogout = () => {
+  authStore.logout();
+  showLogoutConfirm.value = false;
+};
+
+let resizeObserver;
+onMounted(() => {
+  if (headerRef.value) {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const height = entry.contentRect.height;
+        document.documentElement.style.setProperty(
+          "--header-height",
+          `${height}px`
+        );
+      }
+    });
+    resizeObserver.observe(headerRef.value);
+  }
+});
+onUnmounted(() => {
+  if (resizeObserver && headerRef.value) {
+    resizeObserver.unobserve(headerRef.value);
+  }
+});
 </script>
+
+<style scoped></style>

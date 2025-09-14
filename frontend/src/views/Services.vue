@@ -1,25 +1,21 @@
-<!-- src/views/Services.vue -->
 <template>
   <main class="container mx-auto px-6 py-12">
     <h1 class="text-5xl font-bold text-center mb-12 text-brand-white">
       Наши услуги
     </h1>
 
-    <!-- Поиск и фильтры -->
-    <div
-      class="bg-brand-gray rounded-xl shadow-lg p-6 mb-12 border border-brand-light-gray flex flex-col md:flex-row gap-6 items-center"
-    >
-      <div class="relative flex-grow w-full">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Поиск по названию услуги..."
-          class="w-full py-3 pl-12 pr-4 bg-brand-light-gray border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent text-brand-white placeholder-gray-400"
-        />
-        <i
-          class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-        ></i>
+    <div class="relative mx-auto mb-12 max-w-2xl">
+      <div
+        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5"
+      >
+        <i class="fas fa-search text-secondary-text"></i>
       </div>
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Поиск по названию услуги..."
+        class="w-full rounded-full border border-white/20 bg-light-dark py-4 pl-14 pr-6 text-white placeholder-secondary-text focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/50"
+      />
     </div>
 
     <div v-if="loading" class="text-center py-10 text-brand-text">
@@ -29,7 +25,6 @@
 
     <section v-if="!loading && filteredServices.length">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- Карточка услуги -->
         <router-link
           v-for="service in filteredServices"
           :key="service.service_id"

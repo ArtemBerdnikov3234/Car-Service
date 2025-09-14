@@ -1,76 +1,75 @@
-<!-- src/layouts/AdminLayout.vue -->
 <template>
-  <div class="flex h-screen bg-gray-100 text-gray-800">
-    <!-- Sidebar (темный) -->
-    <aside
-      class="w-64 bg-brand-gray text-gray-300 flex flex-col border-r border-brand-light-gray"
-    >
-      <div
-        class="p-4 text-3xl font-bold border-b border-brand-light-gray text-brand-white"
-      >
-        Auto<span class="text-brand-accent">Service</span>
+  <div class="flex h-screen bg-dark font-sans text-primary-text">
+    <aside class="flex w-64 flex-col border-r border-white/10 bg-light-dark">
+      <div class="border-b border-white/10 p-4 text-center text-2xl font-bold">
+        <router-link :to="{ name: 'AdminDashboard' }">
+          <span class="text-brand-red">Admin</span
+          ><span class="text-white">Panel</span>
+        </router-link>
       </div>
-      <nav class="flex-grow p-4 space-y-2">
-        <!-- Классы .nav-link теперь применены напрямую -->
+
+      <nav class="flex-grow space-y-2 p-4">
         <router-link
           :to="{ name: 'AdminDashboard' }"
-          class="flex items-center px-4 py-3 rounded-lg transition duration-200 hover:bg-brand-light-gray hover:text-white"
-          active-class="bg-brand-accent text-white"
+          class="flex items-center gap-3 rounded-lg px-4 py-3 text-secondary-text transition duration-200 hover:bg-white/5 hover:text-white"
+          active-class="bg-brand-red !text-white shadow-lg shadow-brand-red/20"
         >
-          <i class="fas fa-calendar-alt w-6 text-center mr-3"></i>Расписание
+          <i class="fas fa-calendar-alt w-6 text-center"></i>
+          <span>Расписание</span>
         </router-link>
 
         <router-link
           :to="{ name: 'AdminDictionaries' }"
-          class="flex items-center px-4 py-3 rounded-lg transition duration-200 hover:bg-brand-light-gray hover:text-white"
-          active-class="bg-brand-accent text-white"
+          class="flex items-center gap-3 rounded-lg px-4 py-3 text-secondary-text transition duration-200 hover:bg-white/5 hover:text-white"
+          active-class="bg-brand-red !text-white shadow-lg shadow-brand-red/20"
         >
-          <i class="fas fa-book w-6 text-center mr-3"></i>Справочники
+          <i class="fas fa-book w-6 text-center"></i>
+          <span>Справочники</span>
         </router-link>
 
         <router-link
           :to="{ name: 'AdminClients' }"
-          class="flex items-center px-4 py-3 rounded-lg transition duration-200 hover:bg-brand-light-gray hover:text-white"
-          active-class="bg-brand-accent text-white"
+          class="flex items-center gap-3 rounded-lg px-4 py-3 text-secondary-text transition duration-200 hover:bg-white/5 hover:text-white"
+          active-class="bg-brand-red !text-white shadow-lg shadow-brand-red/20"
         >
-          <i class="fas fa-users w-6 text-center mr-3"></i>Клиенты
+          <i class="fas fa-users w-6 text-center"></i>
+          <span>Клиенты</span>
         </router-link>
       </nav>
-      <div class="p-4 border-t border-brand-light-gray">
-        <!-- Классы .nav-link применены и здесь -->
+
+      <div class="border-t border-white/10 p-4">
         <button
           @click="authStore.logout()"
-          class="w-full flex items-center px-4 py-3 rounded-lg transition duration-200 hover:bg-brand-light-gray hover:text-white"
+          class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-secondary-text transition duration-200 hover:bg-white/5 hover:text-white"
         >
-          <i class="fas fa-sign-out-alt w-6 text-center mr-3"></i>Выйти
+          <i class="fas fa-sign-out-alt w-6 text-center"></i>
+          <span>Выйти</span>
         </button>
       </div>
     </aside>
 
-    <!-- Content (светлый) -->
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex flex-1 flex-col overflow-hidden">
       <header
-        class="bg-white shadow-md p-4 flex justify-between items-center border-b border-gray-200"
+        class="flex items-center justify-between border-b border-white/10 bg-card-dark p-4 shadow-lg"
       >
-        <h1 class="text-2xl font-bold text-gray-800">
+        <h1 class="text-2xl font-bold text-white">
           {{ $route.meta.title || "Панель управления" }}
         </h1>
-        <div>
-          <span class="text-gray-500"
-            >Администратор: {{ authStore.user?.firstName }}</span
-          >
+        <div class="text-secondary-text">
+          Администратор: {{ authStore.user?.firstName }}
         </div>
       </header>
-      <main class="flex-1 p-6 overflow-y-auto bg-gray-100">
+
+      <main class="flex-1 overflow-y-auto p-6">
         <router-view />
       </main>
     </div>
   </div>
 </template>
 
-<!-- Блок <style> полностью удален -->
-
 <script setup>
 import { useAuthStore } from "@/store/auth";
 const authStore = useAuthStore();
 </script>
+
+<style scoped></style>

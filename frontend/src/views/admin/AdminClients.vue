@@ -1,4 +1,3 @@
-<!-- src/views/admin/AdminClients.vue -->
 <template>
   <div class="bg-white rounded-lg shadow p-6 border border-gray-200">
     <h2 class="text-2xl font-bold text-gray-800 mb-6">Список клиентов</h2>

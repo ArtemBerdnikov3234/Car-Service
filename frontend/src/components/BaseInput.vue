@@ -1,10 +1,9 @@
-<!-- src/components/BaseInput.vue -->
 <template>
   <div>
     <label
       v-if="label"
       :for="uuid"
-      class="block text-brand-text font-semibold mb-2"
+      class="mb-2 block font-semibold text-secondary-text"
       >{{ label }}</label
     >
     <input
@@ -17,32 +16,23 @@
       :maxlength="maxlength"
       :min="min"
       :max="max"
-      class="w-full px-4 py-3 bg-brand-light-gray border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent text-brand-white"
+      class="w-full rounded-lg border border-white/20 bg-dark px-4 py-3 text-white transition focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/50"
     />
   </div>
 </template>
 
 <script setup>
 import { computed } from "vue";
-
-// Определяем пропсы, которые компонент может принимать
 defineProps({
-  modelValue: [String, Number], // Для v-model
+  modelValue: [String, Number],
   label: String,
-  type: {
-    type: String,
-    default: "text",
-  },
+  type: { type: String, default: "text" },
   placeholder: String,
   required: Boolean,
   maxlength: [String, Number],
   min: [String, Number],
   max: [String, Number],
 });
-
-// Определяем событие для v-model
 defineEmits(["update:modelValue"]);
-
-// Генерируем уникальный ID для связи <label> и <input>
 const uuid = computed(() => `input-${Math.random().toString(36).substr(2, 9)}`);
 </script>

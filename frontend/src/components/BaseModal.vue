@@ -1,45 +1,39 @@
-<!-- src/components/BaseModal.vue -->
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition ease-out duration-200 transform"
+      enter-active-class="transition-opacity duration-300 ease-out"
       enter-from-class="opacity-0"
       enter-to-class="opacity-100"
-      leave-active-class="transition ease-in duration-200 transform"
+      leave-active-class="transition-opacity duration-200 ease-in"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
       <div
         v-show="show"
-        class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-70"
+        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 px-4 backdrop-blur-sm"
+        @click.self="close"
       >
-        <div
-          class="flex items-start justify-center min-h-screen px-4 pt-20 pb-20 text-center"
-          @click.self="close"
+        <Transition
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="opacity-0 scale-95"
+          enter-to-class="opacity-100 scale-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 scale-100"
+          leave-to-class="opacity-0 scale-95"
         >
-          <Transition
-            enter-active-class="transition ease-out duration-300 transform"
-            enter-from-class="opacity-0 translate-y-10 scale-95"
-            enter-to-class="opacity-100 translate-y-0 scale-100"
-            leave-active-class="transition ease-in duration-200 transform"
-            leave-from-class="opacity-100 translate-y-0 scale-100"
-            leave-to-class="opacity-0 translate-y-10 scale-95"
+          <div
+            v-show="show"
+            class="relative w-full max-w-lg rounded-2xl border border-brand-red-light bg-card-dark p-8 shadow-2xl"
           >
-            <div
-              v-show="show"
-              class="relative w-full max-w-lg p-8 mx-auto text-left bg-brand-gray rounded-xl shadow-xl border border-brand-light-gray"
+            <button
+              @click="close"
+              class="absolute top-4 right-4 text-2xl text-secondary-text transition duration-300 hover:rotate-90 hover:text-brand-red"
             >
-              <button
-                @click="close"
-                class="absolute top-0 right-0 mt-4 mr-4 text-gray-400 hover:text-white"
-              >
-                <i class="fas fa-times text-2xl"></i>
-              </button>
-              <slot></slot>
-              <!-- Сюда будет вставляться содержимое модального окна (наша форма) -->
-            </div>
-          </Transition>
-        </div>
+              <i class="fas fa-times"></i>
+            </button>
+            <slot></slot>
+          </div>
+        </Transition>
       </div>
     </Transition>
   </Teleport>
@@ -47,26 +41,12 @@
 
 <script setup>
 import { onMounted, onUnmounted } from "vue";
-
-const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false,
-  },
-});
-
+const props = defineProps({ show: { type: Boolean, default: false } });
 const emit = defineEmits(["close"]);
-
-const close = () => {
-  emit("close");
-};
-
+const close = () => emit("close");
 const closeOnEscape = (e) => {
-  if (e.key === "Escape" && props.show) {
-    close();
-  }
+  if (e.key === "Escape" && props.show) close();
 };
-
 onMounted(() => document.addEventListener("keydown", closeOnEscape));
 onUnmounted(() => document.removeEventListener("keydown", closeOnEscape));
 </script>

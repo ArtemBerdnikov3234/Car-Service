@@ -1,7 +1,5 @@
-<!-- src/views/admin/Dictionaries.vue -->
 <template>
   <div>
-    <!-- Модальное окно для форм (используем BaseModal) -->
     <BaseModal :show="isModalOpen" @close="isModalOpen = false">
       <ServiceForm
         v-if="modalContent === 'service'"
@@ -9,13 +7,10 @@
         @close="isModalOpen = false"
         @saved="onSaved"
       />
-      <!-- Здесь в будущем будет EmployeeForm -->
     </BaseModal>
 
-    <!-- Табы для навигации по справочникам -->
     <div class="mb-8 border-b border-gray-200">
       <nav class="flex space-x-8">
-        <!-- Классы .tab-btn теперь находятся здесь -->
         <button
           @click="activeTab = 'services'"
           :class="[
@@ -46,7 +41,6 @@
     </div>
     <div v-if="error" class="text-center p-10 text-red-500">{{ error }}</div>
 
-    <!-- Таблица Услуг -->
     <div
       v-if="!loading && activeTab === 'services'"
       class="bg-white rounded-lg shadow p-6 border border-gray-200"
@@ -96,7 +90,6 @@
       </div>
     </div>
 
-    <!-- Таблица Персонала -->
     <div
       v-if="!loading && activeTab === 'employees'"
       class="bg-white rounded-lg shadow p-6 border border-gray-200"
@@ -148,8 +141,6 @@
   </div>
 </template>
 
-<!-- Блок <style> полностью удален -->
-
 <script setup>
 import { ref, onMounted } from "vue";
 import apiClient from "@/services/api";
@@ -192,6 +183,6 @@ const openModal = (type, item = null) => {
 
 const onSaved = () => {
   isModalOpen.value = false;
-  fetchData(); // Обновляем данные после сохранения
+  fetchData();
 };
 </script>

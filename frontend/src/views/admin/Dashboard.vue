@@ -1,7 +1,5 @@
-<!-- src/views/admin/Dashboard.vue -->
 <template>
   <div>
-    <!-- Статистические карточки -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="bg-white p-5 rounded-lg shadow border border-gray-200">
         <h3 class="text-gray-500 text-sm font-medium">
@@ -33,7 +31,6 @@
       </div>
     </div>
 
-    <!-- Календарь/Список записей -->
     <div class="bg-white rounded-lg shadow p-6 border border-gray-200">
       <div
         class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4"
@@ -113,8 +110,8 @@ const todayStats = computed(() => ({
   revenue: appointments.value
     .filter((a) => a.status === "completed")
     .reduce((sum, a) => sum + parseFloat(a.final_price || 0), 0),
-  mastersLoad: 50, // Placeholder
-  newClients: 0, // Placeholder
+  mastersLoad: 50,
+  newClients: 0,
 }));
 
 const fetchAppointments = async () => {

@@ -1,52 +1,59 @@
-<!-- src/views/ServiceDetail.vue -->
 <template>
   <main class="container mx-auto px-6 py-12">
-    <div v-if="loading" class="text-center py-20">
+    <div v-if="loading" class="py-20 text-center text-secondary-text">
       Загрузка данных об услуге...
     </div>
-    <div v-if="error" class="text-center py-20 text-red-500">{{ error }}</div>
+    <div v-if="error" class="py-20 text-center text-red-400">{{ error }}</div>
 
-    <div v-if="service" class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-      <!-- Service Info -->
-      <div class="text-gray-900">
-        <h1 class="text-4xl font-bold mb-4">{{ service.name }}</h1>
-        <p class="text-gray-600 mb-6 text-lg">
+    <div v-if="service" class="grid grid-cols-1 gap-12 lg:grid-cols-5">
+      <div
+        class="rounded-2xl border border-brand-red-light bg-card-dark p-8 shadow-lg lg:col-span-3"
+      >
+        <h1 class="mb-4 text-4xl font-bold text-white">{{ service.name }}</h1>
+        <p class="mb-8 text-lg text-secondary-text">
           {{
             service.description || "Подробное описание услуги скоро появится."
           }}
         </p>
 
-        <ul class="space-y-3 mb-6 text-gray-700">
-          <li>
-            <i class="far fa-clock mr-2 text-gray-500 w-5 text-center"></i>
-            Длительность: ~{{ service.duration_minutes }} минут
+        <ul
+          class="mb-8 space-y-4 border-t border-white/10 pt-6 text-secondary-text"
+        >
+          <li class="flex items-center">
+            <i class="far fa-clock mr-3 w-5 text-center text-brand-red"></i>
+            <span>Длительность: ~{{ service.duration_minutes }} минут</span>
           </li>
-          <!-- В будущем можно добавить вывод специализации -->
-          <li>
-            <i class="fas fa-wrench mr-2 text-gray-500 w-5 text-center"></i>
-            Требуется специалист: {{ service.required_spec_id ? "Да" : "Нет" }}
+          <li class="flex items-center">
+            <i class="fas fa-wrench mr-3 w-5 text-center text-brand-red"></i>
+            <span
+              >Требуется специалист:
+              {{ service.required_spec_id ? "Да" : "Нет" }}</span
+            >
           </li>
-          <li>
-            <i class="fas fa-check mr-2 text-gray-500 w-5 text-center"></i>
-            Гарантия на выполненные работы
+          <li class="flex items-center">
+            <i class="fas fa-check mr-3 w-5 text-center text-brand-red"></i>
+            <span>Гарантия на выполненные работы</span>
           </li>
         </ul>
 
-        <p class="text-2xl font-bold mb-6">Цена: {{ service.price }} ₽</p>
-
-        <router-link
-          :to="{ name: 'NewBooking' }"
-          class="inline-block bg-gray-900 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition"
-        >
-          Записаться на услугу
-        </router-link>
+        <div class="border-t border-white/10 pt-6">
+          <p class="mb-6 text-3xl font-bold text-white">
+            Цена: {{ service.price }} ₽
+          </p>
+          <BaseButton :to="{ name: 'NewBooking' }" tag="router-link">
+            Записаться на услугу
+          </BaseButton>
+        </div>
       </div>
 
-      <!-- Image Placeholder -->
       <div
-        class="bg-gray-200 rounded-lg h-80 flex items-center justify-center border border-gray-300"
+        class="flex items-center justify-center rounded-2xl bg-card-dark lg:col-span-2"
       >
-        <span class="text-gray-500">Здесь будет изображение услуги</span>
+        <img
+          src="@/assets/service_placeholder.jpg"
+          alt="Изображение услуги"
+          class="h-full w-full rounded-2xl object-cover"
+        />
       </div>
     </div>
   </main>
@@ -56,6 +63,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import apiClient from "@/services/api";
+import BaseButton from "@/components/BaseButton.vue";
 
 const route = useRoute();
 const service = ref(null);
@@ -69,7 +77,6 @@ onMounted(async () => {
     service.value = data;
   } catch (err) {
     error.value = "Не удалось загрузить данные об услуге.";
-    console.error(err);
   } finally {
     loading.value = false;
   }
