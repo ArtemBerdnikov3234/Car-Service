@@ -1,15 +1,12 @@
 <template>
   <main class="container mx-auto px-6 py-24">
-    <!-- Индикаторы загрузки и ошибки -->
     <div v-if="loading" class="py-20 text-center text-secondary-text">
       <i class="fas fa-spinner fa-spin text-3xl"></i>
       <p class="mt-4 text-lg">Загрузка данных об услуге...</p>
     </div>
     <div v-if="error" class="py-20 text-center text-red-400">{{ error }}</div>
 
-    <!-- Основной контент страницы -->
     <div v-if="service" class="grid grid-cols-1 gap-12 lg:grid-cols-5">
-      <!-- Левая колонка с информацией -->
       <div class="lg:col-span-3">
         <h1 class="mb-4 text-5xl font-bold text-brand-red">
           {{ service.name }}
@@ -20,7 +17,6 @@
           }}
         </p>
 
-        <!-- Список преимуществ -->
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div class="rounded-lg bg-light-dark p-4">
             <i class="fas fa-clock mb-2 text-2xl text-brand-red"></i>
@@ -45,17 +41,12 @@
           </div>
         </div>
 
-        <!-- 
-          ИЗМЕНЕНИЕ ЗДЕСЬ:
-          Новый, более стильный блок с ценой и кнопкой.
-        -->
         <div
           class="mt-8 rounded-2xl bg-gradient-to-br from-card-dark to-light-dark p-8 shadow-2xl shadow-black/30"
         >
           <div
             class="flex flex-col items-center justify-between gap-6 sm:flex-row"
           >
-            <!-- Левая часть с ценой -->
             <div class="text-center sm:text-left">
               <p class="text-secondary-text">Стоимость услуги</p>
               <p
@@ -64,7 +55,7 @@
                 {{ service.price }} ₽
               </p>
             </div>
-            <!-- Правая часть с кнопкой -->
+
             <div class="w-full shrink-0 sm:w-auto">
               <BaseButton
                 :to="{ name: 'NewBooking' }"
@@ -79,7 +70,6 @@
         </div>
       </div>
 
-      <!-- Правая колонка с изображением -->
       <div
         class="flex items-center justify-center rounded-2xl border-2 border-brand-red-light bg-card-dark p-2 shadow-lg lg:col-span-2"
       >

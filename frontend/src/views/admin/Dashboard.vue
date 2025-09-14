@@ -1,31 +1,59 @@
 <template>
   <div>
+    <!-- Модальное окно для создания новой записи -->
+    <BaseModal :show="isBookingModalOpen" @close="isBookingModalOpen = false">
+      <!-- 
+        Компонент AdminBookingForm будет отображаться внутри модального окна.
+        Он будет сообщать родительскому компоненту (Dashboard), когда запись сохранена.
+      -->
+      <AdminBookingForm
+        v-if="isBookingModalOpen"
+        @close="isBookingModalOpen = false"
+        @saved="onBookingSaved"
+      />
+    </BaseModal>
+
     <!-- Блок со статистикой -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <!-- ... ваш код статистики ... -->
+    <div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div class="rounded-xl border border-white/10 bg-card-dark p-5 shadow-lg">
+        <h3 class="text-sm font-medium text-secondary-text">Записей сегодня</h3>
+        <p class="mt-1 text-4xl font-bold text-white">12</p>
+      </div>
+      <div class="rounded-xl border border-white/10 bg-card-dark p-5 shadow-lg">
+        <h3 class="text-sm font-medium text-secondary-text">Выручка сегодня</h3>
+        <p class="mt-1 text-4xl font-bold text-white">35,500 ₽</p>
+      </div>
+      <div class="rounded-xl border border-white/10 bg-card-dark p-5 shadow-lg">
+        <h3 class="text-sm font-medium text-secondary-text">Загрузка</h3>
+        <p class="mt-1 text-4xl font-bold text-white">75%</p>
+      </div>
+      <div class="rounded-xl border border-white/10 bg-card-dark p-5 shadow-lg">
+        <h3 class="text-sm font-medium text-secondary-text">Новых клиентов</h3>
+        <p class="mt-1 text-4xl font-bold text-white">3</p>
+      </div>
     </div>
 
     <!-- ОСНОВНОЙ БЛОК: ТАБЛИЦА ЗАПИСЕЙ -->
-    <div class="bg-white rounded-lg shadow p-6 border border-gray-200">
+    <div class="rounded-2xl border border-white/10 bg-card-dark p-6 shadow-lg">
       <div
-        class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4"
+        class="mb-6 flex flex-col items-center justify-between gap-4 md:flex-row"
       >
-        <h2 class="text-2xl font-bold text-gray-800">Все записи</h2>
-        <button
-          class="bg-gray-800 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg transition flex items-center"
-        >
+        <h2 class="text-2xl font-bold text-white">Все записи</h2>
+        <BaseButton @click="isBookingModalOpen = true">
           <i class="fas fa-plus mr-2"></i>Создать запись
-        </button>
+        </BaseButton>
       </div>
 
-      <div v-if="loading" class="text-center p-10 text-gray-500">
-        Загрузка записей...
+      <div v-if="loading" class="py-10 text-center text-secondary-text">
+        <i class="fas fa-spinner fa-spin text-2xl"></i>
       </div>
-      <div v-if="error" class="text-center p-10 text-red-500">{{ error }}</div>
+      <div v-if="error" class="py-10 text-center text-red-400">{{ error }}</div>
 
       <div v-if="!loading && appointments.length > 0" class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-gray-600">
-          <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+        <table class="w-full text-left text-sm">
+          <thead
+            class="border-b border-white/10 text-xs uppercase text-secondary-text"
+          >
             <tr>
               <th class="p-3">Дата и время</th>
               <th class="p-3">Клиент и Авто</th>
@@ -35,22 +63,24 @@
               <th class="p-3 text-center">Действия</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody class="divide-y divide-white/10 text-secondary-text">
             <tr
               v-for="apt in sortedAppointments"
               :key="apt.appointment_id"
-              class="hover:bg-gray-50 align-top"
+              class="align-top transition hover:bg-white/5"
             >
-              <td class="p-3 font-medium text-gray-900">
+              <td class="p-3 font-medium text-white">
                 <p>{{ formatDate(apt.start_time) }}</p>
-                <p class="text-gray-500">{{ formatTime(apt.start_time) }}</p>
+                <p class="text-secondary-text">
+                  {{ formatTime(apt.start_time) }}
+                </p>
               </td>
               <td class="p-3">
-                <p class="font-semibold text-gray-800">
+                <p class="font-semibold text-white">
                   {{ apt.users_appointments_client_idTousers.first_name }}
                   {{ apt.users_appointments_client_idTousers.last_name }}
                 </p>
-                <p class="text-gray-500">
+                <p class="text-secondary-text">
                   {{ apt.cars.make }} {{ apt.cars.model }} ({{
                     apt.cars.license_plate
                   }})
@@ -59,14 +89,15 @@
               <td class="p-3">
                 <span
                   :class="getStatusClass(apt.status)"
-                  class="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap"
-                  >{{ getStatusText(apt.status) }}</span
+                  class="whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold"
                 >
+                  {{ getStatusText(apt.status) }}
+                </span>
               </td>
               <td class="p-3">
                 <select
                   v-model="apt.selectedMasterId"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  class="w-full rounded-md border-white/20 bg-dark text-white shadow-sm focus:border-brand-red focus:ring focus:ring-brand-red/50"
                 >
                   <option :value="null">Не назначен</option>
                   <option
@@ -81,7 +112,7 @@
               <td class="p-3">
                 <select
                   v-model="apt.selectedBoxId"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  class="w-full rounded-md border-white/20 bg-dark text-white shadow-sm focus:border-brand-red focus:ring focus:ring-brand-red/50"
                 >
                   <option :value="null">Не назначен</option>
                   <option
@@ -94,20 +125,21 @@
                 </select>
               </td>
               <td class="p-3 text-center">
-                <button
+                <BaseButton
                   @click="assignMasterAndBox(apt)"
                   :disabled="apt.isSaving || !isChanged(apt)"
-                  class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-2 text-xs rounded-lg transition disabled:bg-indigo-300 disabled:cursor-not-allowed"
+                  class="!py-2 !px-4 !text-xs"
                 >
                   <span v-if="apt.isSaving"
-                    ><i class="fas fa-spinner fa-spin"></i> Сохранение...</span
+                    ><i class="fas fa-spinner fa-spin mr-1"></i
+                    >Сохранение...</span
                   >
                   <span v-else>Сохранить</span>
-                </button>
-                <p v-if="apt.saveError" class="text-red-500 text-xs mt-1">
+                </BaseButton>
+                <p v-if="apt.saveError" class="mt-1 text-xs text-red-400">
                   {{ apt.saveError }}
                 </p>
-                <p v-if="apt.saveSuccess" class="text-green-500 text-xs mt-1">
+                <p v-if="apt.saveSuccess" class="mt-1 text-xs text-green-400">
                   Сохранено!
                 </p>
               </td>
@@ -118,7 +150,7 @@
 
       <div
         v-if="!loading && appointments.length === 0"
-        class="text-center text-gray-500 py-10"
+        class="py-10 text-center text-secondary-text"
       >
         <p>Записей не найдено.</p>
       </div>
@@ -129,6 +161,11 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import apiClient from "@/services/api";
+import BaseButton from "@/components/BaseButton.vue";
+import BaseModal from "@/components/BaseModal.vue";
+import AdminBookingForm from "@/components/AdminBookingForm.vue";
+
+const isBookingModalOpen = ref(false);
 
 const appointments = ref([]);
 const allMasters = ref([]);
@@ -169,6 +206,11 @@ const fetchData = async () => {
 
 onMounted(fetchData);
 
+const onBookingSaved = () => {
+  isBookingModalOpen.value = false;
+  fetchData(); // Обновляем список записей
+};
+
 const sortedAppointments = computed(() => {
   return [...appointments.value].sort(
     (a, b) => new Date(b.start_time) - new Date(a.start_time)
@@ -176,8 +218,6 @@ const sortedAppointments = computed(() => {
 });
 
 const isChanged = (appointment) => {
-  // Сравниваем то, что выбрано в селекте, с тем, что изначально пришло с сервера
-  // Важно: master_id может быть null, поэтому сравниваем аккуратно.
   const masterChanged =
     (appointment.selectedMasterId || null) !== (appointment.master_id || null);
   const boxChanged =
@@ -189,7 +229,6 @@ const assignMasterAndBox = async (appointment) => {
   appointment.isSaving = true;
   appointment.saveError = null;
   appointment.saveSuccess = false;
-
   try {
     const response = await apiClient.put(
       `/appointments/${appointment.appointment_id}/admin-update`,
@@ -198,35 +237,20 @@ const assignMasterAndBox = async (appointment) => {
         box_id: appointment.selectedBoxId,
       }
     );
-
     const index = appointments.value.findIndex(
       (a) => a.appointment_id === appointment.appointment_id
     );
     if (index !== -1) {
-      // "УМНОЕ" ОБНОВЛЕНИЕ
       const originalAppointment = appointments.value[index];
-
-      // Обновляем только ключевые поля, сохраняя всю остальную структуру
-      originalAppointment.master_id = response.data.master_id;
-      originalAppointment.employees = response.data.employees;
-      originalAppointment.box_id = response.data.box_id;
-      originalAppointment.boxes = response.data.boxes;
-
-      // Обновляем значения в селектах, чтобы isChanged() снова стал false
-      originalAppointment.selectedMasterId = response.data.master_id || null;
-      originalAppointment.selectedBoxId = response.data.box_id || null;
-
-      // Показываем сообщение об успехе
-      originalAppointment.saveSuccess = true;
+      Object.assign(originalAppointment, {
+        ...response.data,
+        selectedMasterId: response.data.master_id || null,
+        selectedBoxId: response.data.box_id || null,
+        saveSuccess: true,
+      });
     }
-
     setTimeout(() => {
-      const currentApt = appointments.value.find(
-        (a) => a.appointment_id === appointment.appointment_id
-      );
-      if (currentApt) {
-        currentApt.saveSuccess = false;
-      }
+      appointment.saveSuccess = false;
     }, 2000);
   } catch (err) {
     console.error("Ошибка при назначении:", err);
@@ -249,6 +273,7 @@ const formatTime = (isoString) =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
 const getStatusText = (status) =>
   ({
     scheduled: "Запланировано",
@@ -256,11 +281,12 @@ const getStatusText = (status) =>
     completed: "Выполнено",
     cancelled: "Отменено",
   }[status] || status);
+
 const getStatusClass = (status) =>
   ({
-    scheduled: "bg-blue-100 text-blue-800",
-    in_progress: "bg-yellow-100 text-yellow-800",
-    completed: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
-  }[status] || "bg-gray-100 text-gray-800");
+    scheduled: "bg-blue-500/20 text-blue-300",
+    in_progress: "bg-yellow-500/20 text-yellow-300",
+    completed: "bg-green-500/20 text-green-300",
+    cancelled: "bg-red-500/20 text-red-300",
+  }[status] || "bg-gray-500/20 text-gray-300");
 </script>

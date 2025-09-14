@@ -1,13 +1,17 @@
 <template>
-  <div class="bg-white rounded-lg shadow p-6 border border-gray-200">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6">Список клиентов</h2>
+  <div class="rounded-2xl border border-white/10 bg-card-dark p-6 shadow-lg">
+    <h2 class="mb-6 text-2xl font-bold text-white">Список клиентов</h2>
 
-    <div v-if="loading" class="text-center p-10 text-gray-500">Загрузка...</div>
-    <div v-if="error" class="text-center p-10 text-red-500">{{ error }}</div>
+    <div v-if="loading" class="py-10 text-center text-secondary-text">
+      <i class="fas fa-spinner fa-spin text-2xl"></i>
+    </div>
+    <div v-if="error" class="py-10 text-center text-red-400">{{ error }}</div>
 
     <div v-if="!loading && clients.length" class="overflow-x-auto">
-      <table class="w-full text-left text-gray-600">
-        <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+      <table class="w-full text-left">
+        <thead
+          class="border-b border-white/10 text-sm uppercase text-secondary-text"
+        >
           <tr>
             <th class="p-4">ID</th>
             <th class="p-4">Имя</th>
@@ -16,23 +20,23 @@
             <th class="p-4">Статус</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody class="divide-y divide-white/10 text-secondary-text">
           <tr
             v-for="client in clients"
             :key="client.user_id"
-            class="hover:bg-gray-50"
+            class="transition hover:bg-white/5"
           >
             <td class="p-4">{{ client.user_id }}</td>
-            <td class="p-4 font-medium text-gray-900">
+            <td class="p-4 font-medium text-white">
               {{ client.first_name }} {{ client.last_name }}
             </td>
             <td class="p-4">{{ client.email }}</td>
             <td class="p-4">{{ client.phone_number || "-" }}</td>
             <td class="p-4">
-              <span v-if="client.is_active" class="text-green-600 font-semibold"
+              <span v-if="client.is_active" class="font-semibold text-green-400"
                 >Активен</span
               >
-              <span v-else class="text-red-600 font-semibold">Неактивен</span>
+              <span v-else class="font-semibold text-red-400">Неактивен</span>
             </td>
           </tr>
         </tbody>
@@ -40,7 +44,7 @@
     </div>
     <div
       v-if="!loading && !clients.length"
-      class="text-center text-gray-500 py-10"
+      class="py-10 text-center text-secondary-text"
     >
       <p>В системе пока нет зарегистрированных клиентов.</p>
     </div>

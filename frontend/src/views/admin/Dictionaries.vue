@@ -1,88 +1,121 @@
 <template>
   <div>
-    <BaseModal :show="isModalOpen" @close="isModalOpen = false">
+    <!-- Модальное окно для формы Услуги -->
+    <BaseModal :show="isServiceModalOpen" @close="closeServiceModal">
       <ServiceForm
         v-if="modalContent === 'service'"
         :service-to-edit="itemToEdit"
-        @close="isModalOpen = false"
+        @close="closeServiceModal"
         @saved="onSaved"
       />
     </BaseModal>
 
-    <div class="mb-8 border-b border-gray-200">
-      <nav class="flex space-x-8">
+    <!-- Модальное окно для подтверждения удаления -->
+    <ConfirmDialog
+      :show="isConfirmModalOpen"
+      title="Подтвердите удаление"
+      :message="`Вы уверены, что хотите удалить услугу '${serviceToDelete?.name}'? Это действие нельзя отменить.`"
+      @close="isConfirmModalOpen = false"
+      @cancel="isConfirmModalOpen = false"
+      @confirm="confirmDelete"
+    />
+
+    <!-- Табы -->
+    <div class="mb-8 border-b border-white/10">
+      <nav class="-mb-px flex space-x-8">
         <button
           @click="activeTab = 'services'"
-          :class="[
+          :class="
             activeTab === 'services'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700',
-          ]"
-          class="py-3 px-1 border-b-2 font-semibold transition"
+              ? 'border-brand-red text-brand-red'
+              : 'border-transparent text-secondary-text hover:border-gray-500 hover:text-white'
+          "
+          class="border-b-2 px-1 py-4 font-semibold transition"
         >
           Услуги
         </button>
         <button
           @click="activeTab = 'employees'"
-          :class="[
+          :class="
             activeTab === 'employees'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700',
-          ]"
-          class="py-3 px-1 border-b-2 font-semibold transition"
+              ? 'border-brand-red text-brand-red'
+              : 'border-transparent text-secondary-text hover:border-gray-500 hover:text-white'
+          "
+          class="border-b-2 px-1 py-4 font-semibold transition"
         >
           Персонал
         </button>
       </nav>
     </div>
 
-    <div v-if="loading" class="text-center p-10 text-gray-500">
-      Загрузка данных...
+    <!-- Индикаторы загрузки и ошибок -->
+    <div v-if="loading" class="py-10 text-center text-secondary-text">
+      <i class="fas fa-spinner fa-spin text-2xl"></i>
     </div>
-    <div v-if="error" class="text-center p-10 text-red-500">{{ error }}</div>
+    <div v-if="error" class="py-10 text-center text-red-400">{{ error }}</div>
 
+    <!-- Таблица Услуг -->
     <div
       v-if="!loading && activeTab === 'services'"
-      class="bg-white rounded-lg shadow p-6 border border-gray-200"
+      class="rounded-2xl border border-white/10 bg-card-dark p-6 shadow-lg"
     >
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Список услуг</h2>
-        <button
-          @click="openModal('service')"
-          class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center"
-        >
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white">Список услуг</h2>
+        <BaseButton @click="openServiceModal(null)">
           <i class="fas fa-plus mr-2"></i>Добавить услугу
-        </button>
+        </BaseButton>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-gray-600">
-          <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+        <table class="w-full text-left">
+          <thead
+            class="border-b border-white/10 text-sm uppercase text-secondary-text"
+          >
             <tr>
               <th class="p-4">Название</th>
               <th class="p-4">Цена</th>
-              <th class="p-4">Длительность (мин)</th>
-              <th class="p-4 text-center">Действия</th>
+              <th class="p-4">Длительность</th>
+              <th class="p-4 text-right">Действия</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody class="divide-y divide-white/10 text-secondary-text">
             <tr
               v-for="service in services"
               :key="service.service_id"
-              class="hover:bg-gray-50"
+              class="transition hover:bg-white/5"
             >
-              <td class="p-4 font-medium text-gray-900">{{ service.name }}</td>
+              <td class="p-4 font-medium text-white">{{ service.name }}</td>
               <td class="p-4">{{ service.price }} ₽</td>
-              <td class="p-4">{{ service.duration_minutes }}</td>
-              <td class="p-4 text-center space-x-4">
-                <button
-                  @click="openModal('service', service)"
-                  class="text-gray-400 hover:text-indigo-600"
-                >
-                  <i class="fas fa-pencil-alt"></i>
-                </button>
-                <button class="text-gray-400 hover:text-red-600">
-                  <i class="fas fa-trash-alt"></i>
-                </button>
+              <td class="p-4">{{ service.duration_minutes }} мин</td>
+              <td class="p-4 text-right">
+                <div class="relative inline-block text-left">
+                  <button
+                    @click.stop="toggleDropdown(service.service_id)"
+                    class="rounded-full p-2 text-secondary-text transition hover:bg-white/10 hover:text-white"
+                  >
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <div
+                    v-if="activeDropdownId === service.service_id"
+                    class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md border border-white/10 bg-light-dark shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                  >
+                    <div class="py-1">
+                      <a
+                        href="#"
+                        @click.prevent="openServiceModal(service)"
+                        class="flex w-full items-center px-4 py-2 text-sm text-secondary-text transition hover:bg-white/5 hover:text-white"
+                      >
+                        <i class="fas fa-pencil-alt mr-3 w-4"></i>Редактировать
+                      </a>
+                      <a
+                        href="#"
+                        @click.prevent="handleDeleteService(service)"
+                        class="flex w-full items-center px-4 py-2 text-sm text-red-400 transition hover:bg-red-500/10 hover:text-red-300"
+                      >
+                        <i class="fas fa-trash-alt mr-3 w-4"></i>Удалить
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -90,21 +123,22 @@
       </div>
     </div>
 
+    <!-- Таблица Персонала -->
     <div
       v-if="!loading && activeTab === 'employees'"
-      class="bg-white rounded-lg shadow p-6 border border-gray-200"
+      class="rounded-2xl border border-white/10 bg-card-dark p-6 shadow-lg"
     >
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Список персонала</h2>
-        <button
-          class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center"
-        >
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white">Список персонала</h2>
+        <BaseButton>
           <i class="fas fa-plus mr-2"></i>Добавить сотрудника
-        </button>
+        </BaseButton>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-gray-600">
-          <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+        <table class="w-full text-left">
+          <thead
+            class="border-b border-white/10 text-sm uppercase text-secondary-text"
+          >
             <tr>
               <th class="p-4">Имя</th>
               <th class="p-4">Email</th>
@@ -112,26 +146,24 @@
               <th class="p-4">Статус</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody class="divide-y divide-white/10 text-secondary-text">
             <tr
               v-for="employee in employees"
               :key="employee.employee_id"
-              class="hover:bg-gray-50"
+              class="transition hover:bg-white/5"
             >
-              <td class="p-4 font-medium text-gray-900">
+              <td class="p-4 font-medium text-white">
                 {{ employee.users.first_name }} {{ employee.users.last_name }}
               </td>
               <td class="p-4">{{ employee.users.email }}</td>
-              <td class="p-4">
-                <span class="capitalize">{{ employee.users.role }}</span>
-              </td>
+              <td class="p-4 capitalize">{{ employee.users.role }}</td>
               <td class="p-4">
                 <span
                   v-if="employee.users.is_active"
-                  class="text-green-600 font-semibold"
+                  class="font-semibold text-green-400"
                   >Активен</span
                 >
-                <span v-else class="text-red-600 font-semibold">Неактивен</span>
+                <span v-else class="font-semibold text-red-400">Неактивен</span>
               </td>
             </tr>
           </tbody>
@@ -141,11 +173,15 @@
   </div>
 </template>
 
+<style scoped></style>
+
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import apiClient from "@/services/api";
 import BaseModal from "@/components/BaseModal.vue";
 import ServiceForm from "@/components/ServiceForm.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 const activeTab = ref("services");
 const services = ref([]);
@@ -153,9 +189,13 @@ const employees = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
-const isModalOpen = ref(false);
+const isServiceModalOpen = ref(false);
 const modalContent = ref("");
 const itemToEdit = ref(null);
+
+const isConfirmModalOpen = ref(false);
+const serviceToDelete = ref(null);
+const activeDropdownId = ref(null);
 
 const fetchData = async () => {
   loading.value = true;
@@ -175,14 +215,69 @@ const fetchData = async () => {
 };
 onMounted(fetchData);
 
-const openModal = (type, item = null) => {
-  modalContent.value = type;
+const openServiceModal = (item = null) => {
+  modalContent.value = "service";
   itemToEdit.value = item ? { ...item } : null;
-  isModalOpen.value = true;
+  isServiceModalOpen.value = true;
+  closeDropdown();
+};
+
+const closeServiceModal = () => {
+  isServiceModalOpen.value = false;
+  itemToEdit.value = null;
 };
 
 const onSaved = () => {
-  isModalOpen.value = false;
+  closeServiceModal();
   fetchData();
 };
+
+const handleDeleteService = (service) => {
+  serviceToDelete.value = service;
+  isConfirmModalOpen.value = true;
+  closeDropdown();
+};
+
+const confirmDelete = async () => {
+  if (!serviceToDelete.value) return;
+  try {
+    await apiClient.delete(`/services/${serviceToDelete.value.service_id}`);
+    fetchData();
+  } catch (err) {
+    console.error("Ошибка при удалении услуги:", err);
+    error.value = err.response?.data?.message || "Не удалось удалить услугу.";
+  } finally {
+    isConfirmModalOpen.value = false;
+    serviceToDelete.value = null;
+  }
+};
+
+const toggleDropdown = (serviceId) => {
+  if (activeDropdownId.value === serviceId) {
+    activeDropdownId.value = null;
+  } else {
+    activeDropdownId.value = serviceId;
+  }
+};
+
+const closeDropdown = () => {
+  activeDropdownId.value = null;
+};
+
+const handleClickOutside = (event) => {
+  if (
+    activeDropdownId.value &&
+    !event.target.closest(".relative.inline-block")
+  ) {
+    closeDropdown();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>

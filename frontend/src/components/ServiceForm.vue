@@ -1,9 +1,10 @@
 <template>
   <div>
-    <h2 class="text-3xl font-bold mb-6 text-gray-800">
+    <h2 class="mb-8 text-center text-3xl font-bold text-brand-red">
       {{ serviceToEdit ? "Редактировать услугу" : "Добавить новую услугу" }}
     </h2>
     <form @submit.prevent="submitForm" class="space-y-6">
+      <!-- Название -->
       <BaseInput
         v-model="form.name"
         label="Название услуги"
@@ -11,20 +12,24 @@
         required
       />
 
+      <!-- Описание -->
       <div>
-        <label for="description" class="block text-gray-700 font-semibold mb-2"
+        <label
+          for="description"
+          class="mb-2 block font-semibold text-secondary-text"
           >Описание</label
         >
         <textarea
           v-model="form.description"
           id="description"
           rows="3"
-          class="form-input"
           placeholder="Краткое описание того, что входит в услугу"
+          class="w-full rounded-lg border border-white/20 bg-dark px-4 py-3 text-white transition focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/50"
         ></textarea>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Цена и Длительность -->
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         <BaseInput
           v-model.number="form.price"
           label="Цена, ₽"
@@ -41,28 +46,36 @@
         />
       </div>
 
+      <!-- Чекбокс "Активна" -->
       <div class="flex items-center">
         <input
           v-model="form.is_active"
           type="checkbox"
           id="is_active"
-          class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          class="h-5 w-5 rounded border-white/20 bg-dark text-brand-red transition focus:ring-2 focus:ring-brand-red/50 focus:ring-offset-2 focus:ring-offset-card-dark"
         />
-        <label for="is_active" class="ml-2 block text-sm text-gray-900"
-          >Услуга активна и доступна для записи</label
+        <label
+          for="is_active"
+          class="ml-3 block text-sm font-medium text-secondary-text"
         >
+          Услуга активна и доступна для записи
+        </label>
       </div>
 
-      <p v-if="error" class="text-red-500 text-center">{{ error }}</p>
+      <!-- Сообщение об ошибке -->
+      <p v-if="error" class="text-center text-red-400">{{ error }}</p>
 
-      <div class="pt-6 flex justify-end gap-4 border-t border-gray-200">
-        <button @click="$emit('close')" type="button" class="btn-secondary">
+      <!-- Кнопки управления -->
+      <div class="flex justify-end gap-4 border-t border-white/10 pt-6">
+        <BaseButton @click="$emit('close')" type="button" variant="secondary">
           Отмена
-        </button>
-        <button type="submit" :disabled="loading" class="btn-primary">
-          <span v-if="loading">Сохранение...</span>
+        </BaseButton>
+        <BaseButton type="submit" :disabled="loading">
+          <span v-if="loading"
+            ><i class="fas fa-spinner fa-spin mr-2"></i>Сохранение...</span
+          >
           <span v-else><i class="fas fa-save mr-2"></i>Сохранить</span>
-        </button>
+        </BaseButton>
       </div>
     </form>
   </div>
@@ -72,6 +85,7 @@
 import { ref, reactive, watch } from "vue";
 import apiClient from "@/services/api";
 import BaseInput from "@/components/BaseInput.vue";
+import BaseButton from "@/components/BaseButton.vue"; // <-- Не забудьте импортировать
 
 const props = defineProps({
   serviceToEdit: { type: Object, default: null },
@@ -115,13 +129,11 @@ const submitForm = async () => {
     const serviceData = { ...form };
 
     if (props.serviceToEdit?.service_id) {
-      // Режим редактирования
       await apiClient.put(
         `/services/${props.serviceToEdit.service_id}`,
         serviceData
       );
     } else {
-      // Режим создания
       await apiClient.post("/services", serviceData);
     }
     emit("saved");
